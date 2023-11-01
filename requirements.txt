@@ -4,7 +4,7 @@ backcall @ file:///home/ktietz/src/ci/backcall_1611930011877/work
 biopython @ file:///tmp/build/80754af9/biopython_1632738057617/work
 Bottleneck @ file:///opt/conda/conda-bld/bottleneck_1657175564434/work
 brotlipy==0.7.0
-certifi @ file:///croot/certifi_1671487769961/work/certifi
+certifi==2023.7.22
 cffi @ file:///croot/cffi_1670423208954/work
 charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
 cryptography @ file:///croot/cryptography_1677533068310/work
@@ -69,6 +69,7 @@ torch==1.13.1
 torch-geometric @ file:///usr/share/miniconda/envs/test/conda-bld/pyg_1690989686626/work
 torch-scatter @ file:///usr/share/miniconda/envs/test/conda-bld/pytorch-scatter_1678970450860/work
 torchaudio==0.13.1
+torchmetrics @ file:///home/conda/feedstock_root/build_artifacts/torchmetrics_1678720682204/work
 torchvision==0.14.1
 tornado @ file:///home/conda/feedstock_root/build_artifacts/tornado_1656937818679/work
 tqdm @ file:///opt/conda/conda-bld/tqdm_1664392687731/work
