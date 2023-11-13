@@ -33,26 +33,28 @@ class GCN_Geo(torch.nn.Module):
         super(GCN_Geo, self).__init__()
 
         self.nn_conv_1 = NNConv(initial_dim_gcn, hidden_dim_nn_1,
-                                nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, initial_dim_gcn * hidden_dim_nn_1)), 
-                                aggr='add' )
+                               nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, initial_dim_gcn * hidden_dim_nn_1)), 
+                               aggr='add' )
         
-        self.nn_conv_2 = NNConv(hidden_dim_nn_1, hidden_dim_nn_2,
-                                nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, hidden_dim_nn_1 * hidden_dim_nn_2)), 
-                                aggr='add')
+        #self.nn_conv_2 = NNConv(hidden_dim_nn_1, hidden_dim_nn_2,
+        #                       nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, hidden_dim_nn_1 * hidden_dim_nn_2)), 
+        #                       aggr='add')
         
-        self.nn_conv_3 = NNConv(hidden_dim_nn_2, hidden_dim_nn_3,
-                                nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, hidden_dim_nn_2 * hidden_dim_nn_3)), 
-                                aggr='add')
+        #self.nn_conv_3 = NNConv(hidden_dim_nn_2, hidden_dim_nn_3,
+        #                       nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, hidden_dim_nn_2 * hidden_dim_nn_3)), 
+        #                        aggr='add')
         
         #The 7 comes from the four amino acid features that were concatenated
-        self.nn_gat_0 = ARMAConv(hidden_dim_nn_3+7, hidden_dim_gat_0, num_stacks = 3, dropout=0, num_layers=7, shared_weights = False ) #TODO
+        self.nn_gat_0 = ARMAConv(hidden_dim_nn_1+7, hidden_dim_gat_0, num_stacks = 10, dropout=0, num_layers=20, shared_weights = False ) #TODO
 
         self.readout = aggr.SumAggregation()
         
-        self.linear1 = nn.Linear(hidden_dim_gat_0+7, hidden_dim_fcn_1)
-        self.linear2 = nn.Linear(hidden_dim_fcn_1, hidden_dim_fcn_2)
-        self.linear3 = nn.Linear(hidden_dim_fcn_2, hidden_dim_fcn_3)
-        self.linear4 = nn.Linear(hidden_dim_fcn_3, 2) #TODO Classification
+        #The 7 comes from the four peptides features that were concatenated
+        self.linear1 = nn.Linear(hidden_dim_gat_0+7, 2)
+        #self.linear1 = nn.Linear(hidden_dim_gat_0+7, hidden_dim_fcn_1)
+        #self.linear2 = nn.Linear(hidden_dim_fcn_1, hidden_dim_fcn_2)
+        #self.linear3 = nn.Linear(hidden_dim_fcn_2, hidden_dim_fcn_3)
+        #self.linear4 = nn.Linear(hidden_dim_fcn_3, 2) #TODO Classification
 
     def forward(self, data):
         cc, x, edge_index,  edge_attr, monomer_labels = data.cc, data.x, data.edge_index, data.edge_attr, data.monomer_labels
@@ -60,11 +62,11 @@ class GCN_Geo(torch.nn.Module):
         x = self.nn_conv_1(x, edge_index, edge_attr)
         x = F.relu(x)
         
-        x = self.nn_conv_2(x, edge_index, edge_attr)
-        x = F.relu(x)
+        #x = self.nn_conv_2(x, edge_index, edge_attr)
+        #x = F.relu(x)
         
-        x = self.nn_conv_3(x, edge_index, edge_attr)
-        x = F.relu(x)
+        #x = self.nn_conv_3(x, edge_index, edge_attr)
+        #x = F.relu(x)
         
         results_list = []
         
@@ -99,13 +101,13 @@ class GCN_Geo(torch.nn.Module):
         p = torch.cat(results_list, dim=0)
             
         p = self.linear1(p)
-        p = F.relu(p)
-        p = self.linear2(p)
-        p = F.relu(p)
-        p = self.linear3(p)
-        p = F.relu(p)
-        p = self.linear4(p)
-        p = F.sigmoid(p) #TODO new
+        # p = F.relu(p)
+        #p = self.linear2(p)
+        #p = F.relu(p)
+        #p = self.linear3(p)
+        #p = F.relu(p)
+        #p = self.linear4(p)
+        #p = torch.sigmoid(p)
 
             
         return p
