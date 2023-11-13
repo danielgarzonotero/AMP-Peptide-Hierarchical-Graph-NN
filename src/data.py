@@ -8,7 +8,7 @@ from src.utils import sequences_geodata, get_features
 from src.device import device_info
 
 class GeoDataset(InMemoryDataset):
-    def __init__(self, root='../data', raw_name='100_all_AMP_suffled.csv', processed_name='rt_processed.pt', transform=None, pre_transform=None):
+    def __init__(self, root='../data', raw_name='all_AMP_suffled.csv', processed_name='rt_processed.pt', transform=None, pre_transform=None):
         self.filename = os.path.join(root, raw_name) #TODO processed name
         
         self.df = pd.read_csv(self.filename)
