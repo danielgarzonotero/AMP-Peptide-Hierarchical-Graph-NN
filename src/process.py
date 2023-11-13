@@ -1,31 +1,28 @@
 
 import torch
-import torch.nn as nn
+import torch.nn.functional as F
 
 def train(model, device, dataloader, optim, epoch):
-    
     model.train()
     
-    loss_func = nn.BCELoss() #TODO
+    loss_func = torch.nn.BCEWithLogitsLoss() #TODO
     loss_collect = 0
 
-    # Looping over the dataloader allows us to pull out or input/output data:
-    # Enumerate allows us to also get the batch number:
+    # Looping over the dataloader allows us to pull out input/output data:
     for batch in dataloader:
-
         # Zero out the optimizer:        
         optim.zero_grad()
         batch = batch.to(device)
-        y_tensor_list = [torch.tensor([1, 0], dtype=torch.float32, device=device) if value == 1 
-                       else torch.tensor([0, 1], dtype=torch.float32, device=device) for value in batch.y]
-        
-        y_label_tensor = torch.stack(y_tensor_list)
-        
+
+        num_classes = 2  #2 classes for binary classification
+        y_labels = torch.tensor(batch.y, dtype=torch.long).to(device)
+        y_label_tensor = F.one_hot(y_labels, num_classes).float().to(device)
+
         # Make a prediction:
         pred = model(batch)
 
         # Calculate the loss:
-        loss = loss_func(pred, y_label_tensor)  
+        loss = loss_func(pred.double(), y_label_tensor.double())
 
         # Backpropagation:
         loss.backward()
@@ -41,14 +38,14 @@ def train(model, device, dataloader, optim, epoch):
         "Epoch:{}   Training dataset:   Loss per Datapoint: {:.3f}%".format(
             epoch, loss_collect * 100
         )
-    )  
+    ) 
     return loss_collect    
 
 def validation(model, device, dataloader, epoch):
 
     model.eval()
     loss_collect = 0
-    loss_func = nn.BCELoss()
+    loss_func = torch.nn.BCEWithLogitsLoss()
         
     # Remove gradients:
     with torch.no_grad():
@@ -57,16 +54,15 @@ def validation(model, device, dataloader, epoch):
         for batch in dataloader:
             
             batch = batch.to(device)
-            y_tensor_list = [torch.tensor([1, 0], dtype=torch.float32, device=device) if value == 1 
-                       else torch.tensor([0, 1], dtype=torch.float32, device=device) for value in batch.y]
-            
-            y_label_tensor = torch.stack(y_tensor_list)
-            
+   
+            num_classes = 2  #2 classes for binary classification
+            y_labels = y_labels = torch.tensor(batch.y, dtype=torch.long).to(device)
+            y_label_tensor = F.one_hot(y_labels, num_classes).float().to(device)
             # Make a prediction:
             pred = model(batch)
 
             # Calculate the loss:
-            loss = loss_func(pred, y_label_tensor)  
+            loss = loss_func(pred.double(), y_label_tensor.double())  
 
             # Calculate the loss and add it to our total loss
             loss_collect += loss.item()  # loss summed across the batch
