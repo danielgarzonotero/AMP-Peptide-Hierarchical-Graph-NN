@@ -58,6 +58,7 @@ def validation(model, device, dataloader, epoch):
             num_classes = 2  #2 classes for binary classification
             y_labels = y_labels = torch.tensor(batch.y, dtype=torch.long).to(device)
             y_label_tensor = F.one_hot(y_labels, num_classes).float().to(device)
+            
             # Make a prediction:
             pred = model(batch)
 

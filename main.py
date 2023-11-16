@@ -32,7 +32,7 @@ finish_time_preprocessing = time.time()
 time_preprocessing = (finish_time_preprocessing - start_time) / 60 #TODO
 
 
-# Número de puntos de datos en el conjunto de entrenamiento:
+# Dataset Split Percent:
 training_percentage = 0.70  #TODO
 validation_percentage = 0.20  #TODO
 test_percentage = 0.10  #TODO
@@ -47,7 +47,7 @@ train_set, val_set, test_set = torch.utils.data.random_split(dataset,
                                                              generator=torch.Generator().manual_seed(42))
 
 # Define dataloaders para conjuntos de entrenamiento, validación y prueba:
-batch_size = 15  #TODO
+batch_size = 100  #TODO
 
 dataloader = DataLoader(dataset, batch_size, shuffle=True)
 
@@ -65,15 +65,16 @@ torch.manual_seed(0)
 initial_dim_gcn = dataset.num_features
 edge_dim_feature = dataset.num_edge_features
 
-hidden_dim_nn_1 = 500
-hidden_dim_nn_2 = 0   
+hidden_dim_nn_1 = 15
+hidden_dim_nn_2 = 10
 hidden_dim_nn_3 = 0
 
-hidden_dim_gat_0 = 10
+hidden_dim_gat_0 = 5
 
-hidden_dim_fcn_1 = 0
-hidden_dim_fcn_2 = 0
-hidden_dim_fcn_3 = 2
+
+hidden_dim_fcn_1 = 5
+hidden_dim_fcn_2 = 10
+hidden_dim_fcn_3 = 0
 
 
 model = GCN_Geo(
@@ -84,15 +85,15 @@ model = GCN_Geo(
                 hidden_dim_nn_3,
 
                 hidden_dim_gat_0,
-
+                
                 hidden_dim_fcn_1,
                 hidden_dim_fcn_2,
-                hidden_dim_fcn_3
+                hidden_dim_fcn_3,
             ).to(device)
 
 
 # Set up optimizer:
-learning_rate = 1E-3
+learning_rate = 5E-4
 optimizer = optim.Adam(model.parameters(), learning_rate)
 
 train_losses = []
@@ -102,7 +103,7 @@ best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
 number_of_epochs = 5
-for epoch in range(1, number_of_epochs):
+for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch)
     train_losses.append(train_loss)
 
@@ -158,7 +159,7 @@ plt.colorbar()
 # Añadir números a la matriz de confusión
 for i in range(confusion_matrix_np.shape[0]):
     for j in range(confusion_matrix_np.shape[1]):
-        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='black')
+        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='grey', fontsize=18)
 
 plt.xlabel('Predicted Negative         Predicted Positive')
 plt.ylabel('True Positive               True Negative')
@@ -205,7 +206,7 @@ plt.colorbar()
 # Añadir números a la matriz de confusión
 for i in range(confusion_matrix_np.shape[0]):
     for j in range(confusion_matrix_np.shape[1]):
-        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='black')
+        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='grey', fontsize=18)
 
 plt.xlabel('Predicted Negative          Predicted Positive')
 plt.ylabel('True Positive                True Negative')
@@ -255,7 +256,7 @@ plt.colorbar()
 # Añadir números a la matriz de confusión
 for i in range(confusion_matrix_np.shape[0]):
     for j in range(confusion_matrix_np.shape[1]):
-        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='black')
+        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='grey', fontsize=18)
 
 plt.xlabel('Predicted Negative         Predicted Positive')
 plt.ylabel('True Positive               True Negative')
