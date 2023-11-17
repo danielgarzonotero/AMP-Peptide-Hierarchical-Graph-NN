@@ -49,7 +49,8 @@ class GCN_Geo(torch.nn.Module):
         self.linear1 = nn.Linear(hidden_dim_gat_0+7, hidden_dim_fcn_1)
         self.linear2 = nn.Linear(hidden_dim_fcn_1, hidden_dim_fcn_2 )
         self.linear3 = nn.Linear(hidden_dim_fcn_2, 2) #TODO Classification
-
+        self.sigmoid = nn.Sigmoid()
+        
     def forward(self, data):
         cc, x, edge_index,  edge_attr, monomer_labels = data.cc, data.x, data.edge_index, data.edge_attr, data.monomer_labels
 
@@ -98,7 +99,8 @@ class GCN_Geo(torch.nn.Module):
         p = F.relu(p)
         
         p = self.linear3(p)
-    
+        # p = self.sigmoid(p)
+        
         return p
 
 

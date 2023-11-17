@@ -57,20 +57,18 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
     #Peptide:
     sequence= get_sequence(sequence)
     peptide_features = torch.tensor(np.array([peptide_ft_dict[sequence]]), dtype=torch.float32, device=device)
+    
 
-    #if y == 1:
-    #   y = torch.tensor([1,0], dtype=torch.float32, device=device)
-    #else:
-    #    y = torch.tensor([0,1], dtype=torch.float32, device=device)
-        
     geo_dp = Data(x=nodes_features,
+                  y=y,
                   edge_index=graph_edges, 
                   edge_attr=edges_features, 
                   monomer_labels=labels_aminoacid_atoms,
                   cc = cc,
-                  y=y, )
+                  )
     
     return geo_dp, aminoacids_features, peptide_features
+
 
 
 #Atomic Features
@@ -337,13 +335,14 @@ def get_non_peptide_idx(molecule):
     return  edges_nonpeptidic
 
 
+    
 #Getting the label of the atoms based on the aminoacids e.g: ABC --> [1,1,1,2,2,2,2,2,3,3,3,3,3,3,3]
 def get_label_aminoacid_atoms(edges_peptidic, edges_nonpeptidic, molecule):
     
     set_with = set(edges_peptidic)
     set_witout = set(edges_nonpeptidic)
     tuplas_diferentes = list( set_with.symmetric_difference(set_witout))
-    lista_atoms = [elemento for tupla in tuplas_diferentes for elemento in tupla]
+    # lista_atoms = [elemento for tupla in tuplas_diferentes for elemento in tupla]
     
     break_idx = []
     for tupla in tuplas_diferentes:

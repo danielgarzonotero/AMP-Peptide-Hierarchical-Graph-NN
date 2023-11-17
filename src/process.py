@@ -1,6 +1,10 @@
 
 import torch
 import torch.nn.functional as F
+import numpy as np
+
+
+
 
 def train(model, device, dataloader, optim, epoch):
     model.train()
@@ -14,15 +18,16 @@ def train(model, device, dataloader, optim, epoch):
         optim.zero_grad()
         batch = batch.to(device)
 
-        num_classes = 2  #2 classes for binary classification
-        y_labels = torch.tensor(batch.y, dtype=torch.long).to(device)
-        y_label_tensor = F.one_hot(y_labels, num_classes).float().to(device)
-
         # Make a prediction:
         pred = model(batch)
+        
+        # Convertir la lista de etiquetas a un tensor
+        labels_list = [label_representation(y, device) for y in batch.y]
+        y_labels_tensor = torch.stack(labels_list)
+
 
         # Calculate the loss:
-        loss = loss_func(pred.double(), y_label_tensor.double())
+        loss = loss_func(pred.double(), y_labels_tensor.double())
 
         # Backpropagation:
         loss.backward()
@@ -50,20 +55,20 @@ def validation(model, device, dataloader, epoch):
     # Remove gradients:
     with torch.no_grad():
 
-        
         for batch in dataloader:
             
             batch = batch.to(device)
-   
-            num_classes = 2  #2 classes for binary classification
-            y_labels = y_labels = torch.tensor(batch.y, dtype=torch.long).to(device)
-            y_label_tensor = F.one_hot(y_labels, num_classes).float().to(device)
-            
+    
             # Make a prediction:
             pred = model(batch)
+            
+            # Convertir la lista de etiquetas a un tensor
+            labels_list = [label_representation(y, device) for y in batch.y]
+            y_labels_tensor = torch.stack(labels_list)
+
 
             # Calculate the loss:
-            loss = loss_func(pred.double(), y_label_tensor.double())  
+            loss = loss_func(pred.double(), y_labels_tensor.double())  
 
             # Calculate the loss and add it to our total loss
             loss_collect += loss.item()  # loss summed across the batch
@@ -98,13 +103,12 @@ def predict_test(model, dataloader, device, weights_file):
 
             # Make a prediction:
             pred = model(batch.to(device))
-
-            y_tensor_list = [torch.tensor([1, 0], dtype=torch.float32, device=device) if value == 1 
-                       else torch.tensor([0, 1], dtype=torch.float32, device=device) for value in batch.y]
-            y_label_tensor = torch.stack(y_tensor_list)
+            
+            labels_list = [label_representation(y, device) for y in batch.y]
+            y_labels_tensor = torch.stack(labels_list)
             
             X_all.append(batch.x.to(device))
-            y_all.append(y_label_tensor)
+            y_all.append(y_labels_tensor)
             pred_all.append(pred)
 
     # Concatenate the lists of tensors into a single tensor
@@ -115,3 +119,12 @@ def predict_test(model, dataloader, device, weights_file):
     return X_all, y_all, pred_all
 
 
+def label_representation(y, device):
+    if y == 1:
+        
+        return torch.tensor(np.array([1,1]), dtype=torch.long, device=device)
+    elif y == 0:
+        return torch.tensor(np.array([0,0]), dtype=torch.long, device=device)
+    else:
+        raise ValueError("Invalid value for y. It should be either 0 or 1.")
+    
