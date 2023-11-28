@@ -90,7 +90,7 @@ import random
 df = pd.read_csv('all_AMP_suffled.csv' )
 
 total_rows = len(df)
-target_rows = 100
+target_rows = 25
 
 if total_rows > target_rows:
     
@@ -101,8 +101,8 @@ if total_rows > target_rows:
 
     df = df.drop(rows_to_drop_indices)
 
-df.to_csv('100_all_AMP_suffled.csv', index=False, quoting=None)
-df = pd.read_csv('100_all_AMP_suffled.csv')
+df.to_csv('25_all_AMP_suffled.csv', index=False, quoting=None)
+df = pd.read_csv('25_all_AMP_suffled.csv')
 filas, columnas = df.shape
 print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 

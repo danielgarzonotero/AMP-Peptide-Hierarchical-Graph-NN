@@ -9,6 +9,7 @@ from rdkit.Chem import Crippen, Descriptors
 
 from sklearn.preprocessing import OneHotEncoder
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from Bio.Align import substitution_matrices
 
 
 
@@ -53,7 +54,10 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
     #Aminoacid:
     aminoacids =get_aminoacids(sequence)
     aminoacids_features = torch.tensor(np.array([amino_ft_dict[amino] for amino in aminoacids]), dtype=torch.float32, device=device)
-
+    
+    #BLOSUM62 feature matrix
+    blosum62 = torch.tensor(np.array(construir_matriz_caracteristicas(sequence)), dtype =torch.float32, device = device)
+    
     #Peptide:
     sequence= get_sequence(sequence)
     peptide_features = torch.tensor(np.array([peptide_ft_dict[sequence]]), dtype=torch.float32, device=device)
@@ -67,7 +71,7 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
                   cc = cc,
                   )
     
-    return geo_dp, aminoacids_features, peptide_features
+    return geo_dp, aminoacids_features, blosum62, peptide_features
 
 
 
@@ -421,3 +425,35 @@ def get_sequence(peptide):
     sequence = peptide.replace("(ac)", "[ac].").replace("_", "").replace("1", "").replace("2", "").replace("3", "").replace("4", "")
     
     return sequence
+
+
+def construir_matriz_caracteristicas(sequence):
+    secuencia = get_sequence(sequence)
+    blosum62 = substitution_matrices.load("BLOSUM62")
+    num_aminoacidos = len(blosum62.alphabet)
+    longitud_secuencia = len(secuencia)
+    
+    matriz_caracteristicas = np.zeros((num_aminoacidos, longitud_secuencia))
+
+    for i in range(longitud_secuencia):
+        for j, aminoacido in enumerate(blosum62.alphabet[:num_aminoacidos]):
+            puntuacion = blosum62[secuencia[i], aminoacido]
+            matriz_caracteristicas[j, i] = puntuacion
+
+    return matriz_caracteristicas.T
+
+
+""" secuencias = ["ARND", "GATAAHACYPWA", "GAA"]
+
+matrices_caracteristicas = []
+
+for secuencia in secuencias:
+    matriz_caracteristicas = construir_matriz_caracteristicas(secuencia)
+    matrices_caracteristicas.append(matriz_caracteristicas)
+
+# Transponer la matriz de la tercera secuencia
+matriz_transpuesta = matrices_caracteristicas[0]
+print(matriz_transpuesta)
+print(matriz_transpuesta.shape) """
+
+# %%

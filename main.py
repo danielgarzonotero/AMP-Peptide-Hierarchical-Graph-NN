@@ -10,8 +10,6 @@ from src.device import device_info
 from src.data import GeoDataset
 from src.model import GCN_Geo 
 from src.process import train, validation, predict_test
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
-from scipy.stats import pearsonr
 from math import sqrt
 from torchmetrics.classification import BinaryConfusionMatrix
 
@@ -69,12 +67,12 @@ hidden_dim_nn_1 = 15
 hidden_dim_nn_2 = 10
 hidden_dim_nn_3 = 0
 
-hidden_dim_gat_0 = 5
+hidden_dim_gat_0 = 30
 
 
-hidden_dim_fcn_1 = 5
-hidden_dim_fcn_2 = 10
-hidden_dim_fcn_3 = 0
+hidden_dim_fcn_1 = 50
+hidden_dim_fcn_2 = 100
+hidden_dim_fcn_3 = 0 #TODO QUITAR
 
 
 model = GCN_Geo(
@@ -94,7 +92,8 @@ model = GCN_Geo(
 
 # Set up optimizer:
 learning_rate = 5E-4
-optimizer = optim.Adam(model.parameters(), learning_rate)
+weight_decay = 1E-4 #TODO
+optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
 train_losses = []
 val_losses = []
@@ -102,7 +101,8 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 5
+number_of_epochs = 150
+
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch)
     train_losses.append(train_loss)
@@ -313,6 +313,7 @@ data = {
         "test_percentage %",
         "batch_size", 
         "learning_rate",
+        "weight_decay",
         "number_of_epochs",
         "true_positives_train",
         "true_negatives_train",
@@ -363,6 +364,7 @@ data = {
         test_percentage*100,
         batch_size,
         learning_rate,
+        weight_decay,
         number_of_epochs,
         true_positives_train,
         true_negatives_train,

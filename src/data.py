@@ -36,6 +36,7 @@ class GeoDataset(InMemoryDataset):
         
         cc = 0 #This is an ID for each peptide in the dataset to then be able to call each dictionary
         aminoacids_features_dict = {} #We use this dictionaries in the forward to call the amino and peptide features for each peptide in the batch
+        blosum62_dict = {}
         peptides_features_dict = {}
         
         for i, (x, y) in enumerate(zip(self.x, self.y)):
@@ -44,7 +45,8 @@ class GeoDataset(InMemoryDataset):
 
             data_list.append(sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[0])
             aminoacids_features_dict[cc] = sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[1]
-            peptides_features_dict[cc]   = sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[2]
+            blosum62_dict[cc] = sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[2]
+            peptides_features_dict[cc]   = sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[3]
             
             cc += 1
             
@@ -58,7 +60,6 @@ class GeoDataset(InMemoryDataset):
                 pd.DataFrame(progress_data).to_csv(csv_file_path, index=False)
             
         
-        
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
         
@@ -67,10 +68,12 @@ class GeoDataset(InMemoryDataset):
 
         # rutas relativas para los diccionarios
         aminoacids_features_dict_path = os.path.join(dictionaries_path, 'aminoacids_features_dict.pt')
+        blosum62_dict_path = os.path.join(dictionaries_path, 'blosum62_dict.pt')
         peptides_features_dict_path = os.path.join(dictionaries_path, 'peptides_features_dict.pt')
 
         # Guarda los diccionarios 
         torch.save(aminoacids_features_dict, aminoacids_features_dict_path)
+        torch.save(blosum62_dict, blosum62_dict_path)
         torch.save(peptides_features_dict, peptides_features_dict_path)
 
      

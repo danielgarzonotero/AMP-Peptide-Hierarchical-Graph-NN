@@ -14,6 +14,7 @@ dataset = GeoDataset(root='data')
 
 # using the relative paths
 aminoacids_features_dict = torch.load('data/dictionaries/aminoacids_features_dict.pt')
+blosum62_dict = torch.load('data/dictionaries/blosum62_dict.pt')
 peptides_features_dict = torch.load('data/dictionaries/peptides_features_dict.pt')
 
 #Hierarchical Graph Neural Network
@@ -41,15 +42,17 @@ class GCN_Geo(torch.nn.Module):
                                aggr='add')
         
         
-        #The 7 comes from the four amino acid features that were concatenated
-        self.nn_gat_0 = ARMAConv(hidden_dim_nn_2+7, hidden_dim_gat_0, num_stacks = 10, dropout=0, num_layers=20, shared_weights = False ) #TODO
+        #The 7 and 24 comes from the four amino acid features and blosum62 matrix that were concatenated, 
+        self.nn_gat_0 = ARMAConv(hidden_dim_nn_2+7+24, hidden_dim_gat_0, num_stacks = 3, dropout=0.1, num_layers=7, shared_weights = False ) #TODO
         self.readout = aggr.SumAggregation()
         
         #The 7 comes from the four peptides features that were concatenated
         self.linear1 = nn.Linear(hidden_dim_gat_0+7, hidden_dim_fcn_1)
         self.linear2 = nn.Linear(hidden_dim_fcn_1, hidden_dim_fcn_2 )
         self.linear3 = nn.Linear(hidden_dim_fcn_2, 2) #TODO Classification
-        self.sigmoid = nn.Sigmoid()
+        
+        
+        # self.sigmoid = nn.Sigmoid()
         
     def forward(self, data):
         cc, x, edge_index,  edge_attr, monomer_labels = data.cc, data.x, data.edge_index, data.edge_attr, data.monomer_labels
@@ -75,7 +78,9 @@ class GCN_Geo(torch.nn.Module):
             
             #adding amino acids features
             aminoacids_features_i = aminoacids_features_dict[cc_i]
-            xi = torch.cat((xi, aminoacids_features_i), dim=1)
+            blosum62_i = blosum62_dict[cc_i]
+            
+            xi = torch.cat((xi, aminoacids_features_i, blosum62_i), dim=1) #TODO
             
             #Graph convolution amino acid level
             xi = self.nn_gat_0(xi, amino_index_i) 
@@ -99,6 +104,7 @@ class GCN_Geo(torch.nn.Module):
         p = F.relu(p)
         
         p = self.linear3(p)
+        
         # p = self.sigmoid(p)
         
         return p
