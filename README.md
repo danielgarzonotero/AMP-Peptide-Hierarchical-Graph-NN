@@ -1,1 +1,1 @@
-# Hierarchical_RT_PyGeo
+# AMP-Peptide-Hierarchical-Graph-NN
