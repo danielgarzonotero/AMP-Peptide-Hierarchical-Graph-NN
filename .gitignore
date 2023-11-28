@@ -1,2 +1,4 @@
-*.pt #dictionaries 
-*.pth #best model weights
+.pt #dictionaries 
+data/dictionaries
+.pth #best model weights
+data/processed
