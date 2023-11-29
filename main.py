@@ -12,6 +12,8 @@ from src.model import GCN_Geo
 from src.process import train, validation, predict_test
 from math import sqrt
 from torchmetrics.classification import BinaryConfusionMatrix
+from sklearn.metrics import roc_curve, auc
+
 
 device_information = device_info()
 print(device_information)
@@ -91,8 +93,8 @@ model = GCN_Geo(
 
 
 # Set up optimizer:
-learning_rate = 5E-4
-weight_decay = 1E-4 #TODO
+learning_rate = 1E-3
+weight_decay = 1E-5 #TODO
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
 train_losses = []
@@ -101,7 +103,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 150
+number_of_epochs = 100
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch)
@@ -139,7 +141,7 @@ weights_file = "best_model_weights.pth"
 # ////////// Training set /////////////:
 input_all, target_all_train, pred_prob_all_train = predict_test(model, train_dataloader, device, weights_file)
 
-bcm = BinaryConfusionMatrix(task="binary", num_classes=2).to(device)
+bcm = BinaryConfusionMatrix(task="binary", threshold=0.5, num_classes=2).to(device) #TODO
 confusion_matrix = bcm(pred_prob_all_train, target_all_train)
 confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
 
@@ -178,18 +180,34 @@ specificity_train = true_negatives_train / (true_negatives_train + false_positiv
 f1_score_train = 2 * (precision_train * recall_train) / (precision_train + recall_train)
 
 # Imprimir las métricas
-print('///Evaluation Metrics - Trainning///\n') #TODO incluir en el csv
+print('///Evaluation Metrics - Trainning///\n') 
 print(f"Accuracy: {accuracy_train:.3f}")
 print(f"Precision: {precision_train:.3f}")
 print(f"Recall: {recall_train:.3f}")
 print(f"Specificity: {specificity_train:.3f}")
 print(f"F1 Score: {f1_score_train:.3f}")
 
+# Calcular la curva ROC
+fpr, tpr, thresholds = roc_curve( target_all_train.cpu().numpy(), pred_prob_all_train.cpu().numpy())
+
+# Calcular el área bajo la curva ROC (AUC)
+roc_auc = auc(fpr, tpr)
+
+# Trazar la curva ROC
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc:.2f}')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
+plt.xlabel('False Positive Rate (FPR)')
+plt.ylabel('True Positive Rate (TPR)')
+plt.title('Receiver Operating Characteristic (ROC) Curve - Trainning Set')
+plt.legend(loc='lower right')
+plt.show()
+
 # ////////// Validation Set //////////:
 
 input_all, target_all_validation, pred_prob_all_validation = predict_test(model, val_dataloader, device, weights_file)
 
-bcm = BinaryConfusionMatrix(task="binary", num_classes=2).to(device)
+bcm = BinaryConfusionMatrix(task="binary", threshold=0.5, num_classes=2).to(device)  #TODO
 confusion_matrix = bcm(pred_prob_all_validation, target_all_validation)
 confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
 
@@ -225,18 +243,33 @@ specificity_val = true_negatives_validation / (true_negatives_validation + false
 f1_score_val = 2 * (precision_val * recall_val) / (precision_val + recall_val)
 
 # Imprimir las métricas
-print('///Evaluation Metrics - Validation///\n') #TODO incluir en el csv
+print('///Evaluation Metrics - Validation///\n') 
 print(f"Accuracy: {accuracy_val:.3f}")
 print(f"Precision: {precision_val:.3f}")
 print(f"Recall: {recall_val:.3f}")
 print(f"Specificity: {specificity_val:.3f}")
 print(f"F1 Score: {f1_score_val:.3f}")
 
+# Calcular la curva ROC
+fpr, tpr, thresholds = roc_curve( target_all_validation.cpu().numpy(), pred_prob_all_validation.cpu().numpy())
+
+# Calcular el área bajo la curva ROC (AUC)
+roc_auc = auc(fpr, tpr)
+
+# Trazar la curva ROC
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc:.2f}')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
+plt.xlabel('False Positive Rate (FPR)')
+plt.ylabel('True Positive Rate (TPR)')
+plt.title('Receiver Operating Characteristic (ROC) Curve - Validation Set')
+plt.legend(loc='lower right')
+plt.show()
 
 # ////////// Test Set //////////:
 input_all, target_all_test, pred_prob_all_test = predict_test(model, test_dataloader, device, weights_file)
 
-bcm = BinaryConfusionMatrix(task="binary", num_classes=2).to(device)
+bcm = BinaryConfusionMatrix(task="binary",threshold=0.5, num_classes=2).to(device) #TODO
 confusion_matrix = bcm(pred_prob_all_test, target_all_test)
 confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
 
@@ -275,13 +308,27 @@ specificity_test = true_negatives_test / (true_negatives_test + false_positives_
 f1_score_test = 2 * (precision_test * recall_test) / (precision_test + recall_test)
 
 # Imprimir las métricas
-print('///Evaluation Metrics - Test///\n') #TODO incluir en el csv
-print(f"Accuracy: {accuracy_test:.3f}")
+print('///Evaluation Metrics - Test///\n') 
 print(f"Precision: {precision_test:.3f}")
 print(f"Recall: {recall_test:.3f}")
 print(f"Specificity: {specificity_test:.3f}")
 print(f"F1 Score: {f1_score_test:.3f}")
 
+# Calcular la curva ROC
+fpr, tpr, thresholds = roc_curve( target_all_test.cpu().numpy(), pred_prob_all_test.cpu().numpy())
+
+# Calcular el área bajo la curva ROC (AUC)
+roc_auc = auc(fpr, tpr)
+
+# Trazar la curva ROC
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc:.2f}')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
+plt.xlabel('False Positive Rate (FPR)')
+plt.ylabel('True Positive Rate (TPR)')
+plt.title('Receiver Operating Characteristic (ROC) Curve - Test Set')
+plt.legend(loc='lower right')
+plt.show()
 
 #Times
 finish_time = time.time()
