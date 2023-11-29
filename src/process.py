@@ -122,9 +122,9 @@ def predict_test(model, dataloader, device, weights_file):
 def label_representation(y, device):
     if y == 1:
         
-        return torch.tensor(np.array([1,1]), dtype=torch.long, device=device)
+        return torch.tensor(np.array([1]), dtype=torch.long, device=device)
     elif y == 0:
-        return torch.tensor(np.array([0,0]), dtype=torch.long, device=device)
+        return torch.tensor(np.array([0]), dtype=torch.long, device=device)
     else:
         raise ValueError("Invalid value for y. It should be either 0 or 1.")
     
