@@ -49,7 +49,8 @@ class GCN_Geo(torch.nn.Module):
         #The 7 comes from the four peptides features that were concatenated
         self.linear1 = nn.Linear(hidden_dim_gat_0+7, hidden_dim_fcn_1)
         self.linear2 = nn.Linear(hidden_dim_fcn_1, hidden_dim_fcn_2 )
-        self.linear3 = nn.Linear(hidden_dim_fcn_2, 2) #TODO Classification
+        self.linear3 = nn.Linear(hidden_dim_fcn_2, hidden_dim_fcn_3) 
+        self.linear4 = nn.Linear(hidden_dim_fcn_3, 1) #TODO 
         
         
         # self.sigmoid = nn.Sigmoid()
@@ -104,9 +105,9 @@ class GCN_Geo(torch.nn.Module):
         p = F.relu(p)
         
         p = self.linear3(p)
-        
-        # p = self.sigmoid(p)
-        
+    
+        p = self.linear4(p)
+    
         return p
 
 
@@ -124,3 +125,6 @@ def get_amino_indices(num_aminoacid):
 
 
 # %%
+
+
+

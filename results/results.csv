@@ -7,44 +7,44 @@ hidden_dim_nn_1 ,15
 hidden_dim_nn_2 ,10
 hidden_dim_nn_3 ,0
 hidden_dim_gat_0,30
-hidden_dim_fcn_1 ,50
+hidden_dim_fcn_1 ,150
 hidden_dim_fcn_2 ,100
-hidden_dim_fcn_3 ,0
+hidden_dim_fcn_3 ,50
 training_percentage %,70.0
 validation_percentage %,20.0
 test_percentage %,10.0
 batch_size,100
-learning_rate,0.0005
-weight_decay,0.0001
-number_of_epochs,150
-true_positives_train,1412
-true_negatives_train,1548
-false_positives_train,568
-false_negatives_train,772
-accuracy_train,0.6883720930232559
-precision_train,0.7131313131313132
-recall_train,0.6465201465201466
-specificity_train,0.7315689981096408
-f1_score_train,0.6781940441882806
-true_positives_validation,351
-true_negatives_validation,458
-false_positives_validation,206
-false_negatives_validation,213
-accuracy_val,0.6587947882736156
-precision_val,0.63016157989228
-recall_val,0.6223404255319149
-specificity_val,0.6897590361445783
-f1_score_val,0.6262265834076717
-true_positives_test,196
-true_negatives_test,212
-false_positives_test,80
-false_negatives_test,128
-accuracy_test,0.6623376623376623
-precision_test,0.7101449275362319
-recall_test,0.6049382716049383
-specificity_test,0.726027397260274
-f1_score_test,0.6533333333333334
-time_preprocessing,0.0006272554397583008
-time_training,22.583434772491454
-time_prediction,0.09252219200134278
-total_time,22.676858286062878
+learning_rate,0.001
+weight_decay,1e-05
+number_of_epochs,1000
+true_positives_train,831
+true_negatives_train,804
+false_positives_train,254
+false_negatives_train,261
+accuracy_train,0.7604651162790698
+precision_train,0.7658986175115208
+recall_train,0.760989010989011
+specificity_train,0.7599243856332704
+f1_score_train,0.763435920992191
+true_positives_validation,195
+true_negatives_validation,214
+false_positives_validation,118
+false_negatives_validation,87
+accuracy_val,0.6661237785016286
+precision_val,0.6230031948881789
+recall_val,0.6914893617021277
+specificity_val,0.6445783132530121
+f1_score_val,0.6554621848739495
+true_positives_test,113
+true_negatives_test,96
+false_positives_test,50
+false_negatives_test,49
+accuracy_test,0.6785714285714286
+precision_test,0.6932515337423313
+recall_test,0.6975308641975309
+specificity_test,0.6575342465753424
+f1_score_test,0.6953846153846154
+time_preprocessing,0.0006583094596862793
+time_training,150.12127376000086
+time_prediction,0.09545346895853678
+total_time,150.21766778230668

@@ -72,9 +72,9 @@ hidden_dim_nn_3 = 0
 hidden_dim_gat_0 = 30
 
 
-hidden_dim_fcn_1 = 50
+hidden_dim_fcn_1 = 150
 hidden_dim_fcn_2 = 100
-hidden_dim_fcn_3 = 0 #TODO QUITAR
+hidden_dim_fcn_3 = 50 #TODO 
 
 
 model = GCN_Geo(
@@ -103,7 +103,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 100
+number_of_epochs = 1000
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch)
@@ -137,11 +137,12 @@ plt.show()
 
 #Testing:
 weights_file = "best_model_weights.pth"
+threshold=0.4
 
-# ////////// Training set /////////////:
+# ------------------------------------////////// Training set /////////////---------------------------------------------------
 input_all, target_all_train, pred_prob_all_train = predict_test(model, train_dataloader, device, weights_file)
 
-bcm = BinaryConfusionMatrix(task="binary", threshold=0.5, num_classes=2).to(device) #TODO
+bcm = BinaryConfusionMatrix(task="binary", threshold=threshold, num_classes=2).to(device) #TODO
 confusion_matrix = bcm(pred_prob_all_train, target_all_train)
 confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
 
@@ -191,11 +192,11 @@ print(f"F1 Score: {f1_score_train:.3f}")
 fpr, tpr, thresholds = roc_curve( target_all_train.cpu().numpy(), pred_prob_all_train.cpu().numpy())
 
 # Calcular el área bajo la curva ROC (AUC)
-roc_auc = auc(fpr, tpr)
+roc_auc_train = auc(fpr, tpr)
 
 # Trazar la curva ROC
 plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc:.2f}')
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc_train:.2f}')
 plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
 plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
@@ -203,11 +204,11 @@ plt.title('Receiver Operating Characteristic (ROC) Curve - Trainning Set')
 plt.legend(loc='lower right')
 plt.show()
 
-# ////////// Validation Set //////////:
+#-------------------------------------------- ////////// Validation Set //////////-------------------------------------------------
 
 input_all, target_all_validation, pred_prob_all_validation = predict_test(model, val_dataloader, device, weights_file)
 
-bcm = BinaryConfusionMatrix(task="binary", threshold=0.5, num_classes=2).to(device)  #TODO
+bcm = BinaryConfusionMatrix(task="binary", threshold=threshold, num_classes=2).to(device)  #TODO
 confusion_matrix = bcm(pred_prob_all_validation, target_all_validation)
 confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
 
@@ -254,11 +255,11 @@ print(f"F1 Score: {f1_score_val:.3f}")
 fpr, tpr, thresholds = roc_curve( target_all_validation.cpu().numpy(), pred_prob_all_validation.cpu().numpy())
 
 # Calcular el área bajo la curva ROC (AUC)
-roc_auc = auc(fpr, tpr)
+roc_auc_validation = auc(fpr, tpr)
 
 # Trazar la curva ROC
 plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc:.2f}')
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc_validation:.2f}')
 plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
 plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
@@ -266,10 +267,10 @@ plt.title('Receiver Operating Characteristic (ROC) Curve - Validation Set')
 plt.legend(loc='lower right')
 plt.show()
 
-# ////////// Test Set //////////:
+# --------------------------------------------////////// Test Set //////////---------------------------------------------------
 input_all, target_all_test, pred_prob_all_test = predict_test(model, test_dataloader, device, weights_file)
 
-bcm = BinaryConfusionMatrix(task="binary",threshold=0.5, num_classes=2).to(device) #TODO
+bcm = BinaryConfusionMatrix(task="binary",threshold=threshold, num_classes=2).to(device) #TODO
 confusion_matrix = bcm(pred_prob_all_test, target_all_test)
 confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
 
@@ -318,11 +319,11 @@ print(f"F1 Score: {f1_score_test:.3f}")
 fpr, tpr, thresholds = roc_curve( target_all_test.cpu().numpy(), pred_prob_all_test.cpu().numpy())
 
 # Calcular el área bajo la curva ROC (AUC)
-roc_auc = auc(fpr, tpr)
+roc_auc_test= auc(fpr, tpr)
 
 # Trazar la curva ROC
 plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc:.2f}')
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc_test:.2f}')
 plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
 plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
@@ -330,7 +331,9 @@ plt.title('Receiver Operating Characteristic (ROC) Curve - Test Set')
 plt.legend(loc='lower right')
 plt.show()
 
-#Times
+
+
+#-----------------Times---------------------------
 finish_time = time.time()
 time_prediction = (finish_time - finish_time_training) / 60
 total_time = (finish_time - start_time) / 60
@@ -340,8 +343,8 @@ print("\n //// Prediction time: {:3f} minutes ////".format(time_prediction))
 print("\n //// Total time: {:3f} minutes ////".format(total_time))
 
 
+#--------------------------------///////////Result DataFrame////////////---------------------------------------
 
-# Result DataFrame
 data = {
     "Metric": [
         "number_features",
@@ -362,6 +365,7 @@ data = {
         "learning_rate",
         "weight_decay",
         "number_of_epochs",
+        "threshold",
         "true_positives_train",
         "true_negatives_train",
         "false_positives_train",
@@ -370,7 +374,8 @@ data = {
         "precision_train", 
         "recall_train", 
         "specificity_train",
-        "f1_score_train", 
+        "f1_score_train",
+        "roc_auc_train", 
         "true_positives_validation",
         "true_negatives_validation",
         "false_positives_validation",
@@ -380,6 +385,7 @@ data = {
         "recall_val", 
         "specificity_val",
         "f1_score_val", 
+        "roc_auc_validation",
         "true_positives_test",
         "true_negatives_test",
         "false_positives_test",
@@ -389,6 +395,7 @@ data = {
         "recall_test", 
         "specificity_test",
         "f1_score_test", 
+        "roc_auc_test",
         "time_preprocessing", 
         "time_training",
         "time_prediction",
@@ -413,6 +420,7 @@ data = {
         learning_rate,
         weight_decay,
         number_of_epochs,
+        threshold,
         true_positives_train,
         true_negatives_train,
         false_positives_train,
@@ -422,6 +430,7 @@ data = {
         recall_train, 
         specificity_train,
         f1_score_train,
+        roc_auc_train,
         true_positives_validation,
         true_negatives_validation,
         false_positives_validation,
@@ -431,6 +440,7 @@ data = {
         recall_val, 
         specificity_val,
         f1_score_val,
+        roc_auc_validation,
         true_positives_test,
         true_negatives_test,
         false_positives_test,
@@ -440,6 +450,7 @@ data = {
         recall_test, 
         specificity_test,
         f1_score_test,
+        roc_auc_test,
         time_preprocessing, 
         time_training,
         time_prediction,
