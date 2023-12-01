@@ -69,12 +69,12 @@ hidden_dim_nn_1 = 15
 hidden_dim_nn_2 = 10
 hidden_dim_nn_3 = 0
 
-hidden_dim_gat_0 = 30
+hidden_dim_gat_0 = 50
 
 
-hidden_dim_fcn_1 = 150
-hidden_dim_fcn_2 = 100
-hidden_dim_fcn_3 = 50 #TODO 
+hidden_dim_fcn_1 = 200
+hidden_dim_fcn_2 = 200
+hidden_dim_fcn_3 = 100 #TODO 
 
 
 model = GCN_Geo(
@@ -103,7 +103,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 1000
+number_of_epochs = 300
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch)
