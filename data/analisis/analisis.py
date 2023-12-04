@@ -1,9 +1,10 @@
-#%%^
+
+#%%# %% /////////////////////Lenghts Distributions​////////////////////////////////
 import pandas as pd
 import matplotlib.pyplot as plt
 
 # AMP Dataset
-df_amp = pd.read_csv('AMP_labeled.csv', names=['sequence', 'activity'])
+df_amp = pd.read_csv('/home/vvd9fd/Documents/Bilodeau Group/Codes/0.Research/AMP-Peptide-Hierarchical-Graph-NN/data/AMP_labeled.csv', names=['sequence', 'activity'])
 
 # Add a column with the length of each sequence
 df_amp['len'] = df_amp['sequence'].apply(len)
@@ -27,7 +28,7 @@ plt.text(0.95, 0.85, f"Mean: {mean_amp:.2f}\nStd: {std_amp:.2f}",
 plt.show()
 
 # ------------------------------Non-AMP Dataset------------------------------
-df_nonamp = pd.read_csv('nonAMP_labeled.csv', names=['sequence', 'activity'])
+df_nonamp = pd.read_csv('/home/vvd9fd/Documents/Bilodeau Group/Codes/0.Research/AMP-Peptide-Hierarchical-Graph-NN/data/nonAMP_labeled.csv', names=['sequence', 'activity'])
 
 # Add a column with the length of each sequence
 df_nonamp['len'] = df_nonamp['sequence'].apply(len)
@@ -50,7 +51,7 @@ plt.text(0.95, 0.85, f"Mean: {mean_nonamp:.2f}\nStd: {std_nonamp:.2f}",
 
 plt.show()
 
-# %%
+# %% /////////////////////Amino Acid Frequency in the Sequences – Length No Included​////////////////////////////////
 import pandas as pd
 import matplotlib.pyplot as plt
 from pandas.plotting import table
@@ -110,6 +111,8 @@ def plot_aminoacid_distribution(df, dataset_name, aminoacidos, color):
     plt.show()
 
 # AMP Dataset
+print('////////// Aminoacid Frecuecy in the sequences - Length NO Included /////////')
+
 df_amp = pd.read_csv('AMP_analisis.csv')
 plot_aminoacid_distribution(df_amp, 'AMP', aminoacidos, 'g')
 
@@ -118,12 +121,7 @@ df_nonamp = pd.read_csv('nonAMP_analisis.csv')
 plot_aminoacid_distribution(df_nonamp, 'Non-AMP', aminoacidos, 'firebrick')
 
 
-
-
-
-
-
-# %%
+# %% # %% /////////////////////Amino Acid Frequency in the Sequences – Length Included​////////////////////////////////
 import pandas as pd
 import matplotlib.pyplot as plt
 from pandas.plotting import table
@@ -182,10 +180,67 @@ def plot_aminoacid_distribution(df, dataset_name, aminoacidos, color):
     plt.show()
 
 # AMP Dataset
+print('////////// Aminoacid Frecuecy in the sequences - Length Included /////////')
 df_amp = pd.read_csv('AMP_analisis2.csv')
 plot_aminoacid_distribution(df_amp, 'AMP', aminoacidos, 'g')
 
 # Non-AMP Dataset
 df_nonamp = pd.read_csv('nonAMP_analisis2.csv')
 plot_aminoacid_distribution(df_nonamp, 'Non-AMP', aminoacidos, 'firebrick')
+
+
+
+# %%# %% /////////////////////Charge Distribution at pH 7​////////////////////////////////
+
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# AMP Dataset
+df_amp = pd.read_csv('AMP_analisis2.csv')
+
+# Add a column with the length of each sequence
+df_amp['net_charge@pH_7'] = df_amp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
+
+# Calculate mean and standard deviation
+mean_amp = df_amp['net_charge@pH_7'].mean()
+std_amp = df_amp['net_charge@pH_7'].std()
+df_amp.to_csv('AMP_analisis3.csv', sep=',', index=False)
+
+# Histogram of sequence lengths
+values_amp, edges_amp, _ = plt.hist(df_amp['net_charge@pH_7'], bins=100, color="g") 
+plt.xlabel('Sequences Charge')
+plt.ylabel('Frequency')
+plt.title('Distribution of AMP Sequence Charge')
+
+# Add legend with mean and standard deviation
+plt.text(0.95, 0.85, f"Mean: {mean_amp:.2f}\nStd: {std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'))
+
+plt.show()
+
+# ------------------------------Non-AMP Dataset------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis2.csv')
+
+# Add a column with the length of each sequence
+df_nonamp['net_charge@pH_7'] = df_nonamp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
+
+# Calculate mean and standard deviation
+mean_nonamp = df_nonamp['net_charge@pH_7'].mean()
+std_nonamp = df_nonamp['net_charge@pH_7'].std()
+df_nonamp.to_csv('nonAMP_analisis3.csv', sep=',', index=False)
+
+# Histogram of sequence lengths
+values_nonamp, edges_nonamp, _ = plt.hist(df_nonamp['net_charge@pH_7'], bins=100, color="firebrick") 
+plt.xlabel('Sequences Charge')
+plt.ylabel('Frequency')
+plt.title('Distribution of nonAMP Sequence Charge')
+
+# Add legend with mean and standard deviation
+plt.text(0.95, 0.85, f"Mean: {mean_nonamp:.2f}\nStd: {std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'))
+
+plt.show()
 # %%
