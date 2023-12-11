@@ -196,11 +196,11 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# AMP Dataset
+# ------------------------ AMP Dataset-------------------------------------------
 df_amp = pd.read_csv('AMP_analisis2.csv')
 
 # Add a column with the length of each sequence
-df_amp['net_charge@pH_7'] = df_amp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
+df_amp['net_charge@pH_7'] = df_amp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(2))
 
 # Calculate mean and standard deviation
 mean_amp = df_amp['net_charge@pH_7'].mean()
@@ -224,7 +224,7 @@ plt.show()
 df_nonamp = pd.read_csv('nonAMP_analisis2.csv')
 
 # Add a column with the length of each sequence
-df_nonamp['net_charge@pH_7'] = df_nonamp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
+df_nonamp['net_charge@pH_7'] = df_nonamp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(2))
 
 # Calculate mean and standard deviation
 mean_nonamp = df_nonamp['net_charge@pH_7'].mean()
@@ -243,4 +243,457 @@ plt.text(0.95, 0.85, f"Mean: {mean_nonamp:.2f}\nStd: {std_nonamp:.2f}",
          bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'))
 
 plt.show()
+
+#%%//////////////// Concentrations of amino acids possess a charge at neutral pH ///////////////////////////
+import pandas as pd
+
+df_amp = pd.read_csv('AMP_analisis2.csv')
+df_nonamp = pd.read_csv('nonAMP_analisis2.csv')
+aminoacidos = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
+
+# ------------------------------Print and Save Average Concentrations------------------------------
+amp_avg_concentrations = df_amp[aminoacidos].mean().sort_values(ascending=False)
+nonamp_avg_concentrations = df_nonamp[aminoacidos].mean().sort_values(ascending=False)
+
+# Crear DataFrames con las concentraciones promedio
+amp_avg_concentrations_df = pd.DataFrame({
+    'Amino Acid': amp_avg_concentrations.index,
+    'AMP Average Concentration': amp_avg_concentrations.round(4)
+})
+
+nonamp_avg_concentrations_df = pd.DataFrame({
+    'Amino Acid': nonamp_avg_concentrations.index,
+    'Non-AMP Average Concentration': nonamp_avg_concentrations.round(4)
+})
+
+# Imprimir y guardar tablas como archivos CSV
+amp_avg_concentrations_df.to_csv('amp_average_concentrations.csv', index=False)
+nonamp_avg_concentrations_df.to_csv('nonamp_average_concentrations.csv', index=False)
+
+df_amp_avg_concentrations = pd.read_csv('amp_average_concentrations.csv')
+df_nonamp_avg_concentrations = pd.read_csv('nonamp_average_concentrations.csv')
+
+# Calcular y imprimir la varianza de la segunda columna de los DataFrames
+variance_amp = df_amp_avg_concentrations.iloc[:, 1].std()
+variance_nonamp = df_nonamp_avg_concentrations.iloc[:, 1].std()
+
+print(f"\nσ AMP: {variance_amp}")
+print(f"σ Non-AMP: {variance_nonamp}")
+
+# %% /////////// Correlation of amino acids and Net Charge /////////////////////
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import r2_score
+from scipy.stats import pearsonr
+
+# Especificar el aminoacido
+aminoacido = 'R'
+
+# ------------------AMP Dataset---------------------
+df_amp = pd.read_csv('AMP_analisis3.csv')
+
+r2 = r2_score(df_amp[aminoacido], df_amp['net_charge@pH_7'])
+r, _ = pearsonr(df_amp[aminoacido], df_amp['net_charge@pH_7'])
+
+# Graficar scatter plot
+legend_text = "R2 Score: {:.4f}\nR Pearson: {:.4f}".format(r2, r)
+plt.scatter(df_amp[aminoacido], df_amp['net_charge@pH_7'], color='g')
+plt.xlabel('[{}]'.format(aminoacido))
+plt.ylabel('Net Charge at pH 7')
+plt.title('[{}] vs Net Charge at pH 7 - AMP'.format(aminoacido))
+
+# Añadir línea de tendencia
+coefficients = np.polyfit(df_amp[aminoacido], df_amp['net_charge@pH_7'], 1)
+polynomial = np.poly1d(coefficients)
+plt.plot(df_amp[aminoacido], polynomial(df_amp[aminoacido]), color='blue', linestyle='--')
+
+plt.legend([legend_text], loc="lower right")
+plt.show()
+
+# ------------------nonAMP Dataset---------------------
+df_amp = pd.read_csv('nonAMP_analisis3.csv')
+r2 = r2_score(df_amp[aminoacido], df_amp['net_charge@pH_7'])
+r, _ = pearsonr(df_amp[aminoacido], df_amp['net_charge@pH_7'])
+
+# Graficar scatter plot
+legend_text = "R2 Score: {:.4f}\nR Pearson: {:.4f}".format(r2, r)
+plt.scatter(df_amp[aminoacido], df_amp['net_charge@pH_7'], color='firebrick')
+plt.xlabel('[{}]'.format(aminoacido))
+plt.ylabel('Net Charge at pH 7')
+plt.title('[{}] vs Net Charge at pH 7 - nonAMP'.format(aminoacido))
+
+# Añadir línea de tendencia
+coefficients = np.polyfit(df_amp[aminoacido], df_amp['net_charge@pH_7'], 1)
+polynomial = np.poly1d(coefficients)
+plt.plot(df_amp[aminoacido], polynomial(df_amp[aminoacido]), color='blue', linestyle='--')
+
+plt.legend([legend_text], loc="lower right")
+plt.show()
+
+
+#%%////////////// To create a csv file with Hydropathy and Amphiphilicity //////////////////
+import pandas as pd
+
+# Datos
+data = [
+    ["Letter", "Hydropathy", "Amphiphilicity"],
+    ["A", 1.8, 0],
+    ["R", -4.5, 2.45],
+    ["N", -3.5, 0],
+    ["D", -3.5, 0],
+    ["C", 2.5, 0],
+    ["Q", -3.5, 1.25],
+    ["E", -3.5, 1.27],
+    ["G", -0.4, 0],
+    ["H", -3.2, 1.45],
+    ["I", 4.5, 0],
+    ["L", 3.8, 0],
+    ["K", -3.9, 3.67],
+    ["M", 1.9, 0],
+    ["F", 2.8, 0],
+    ["P", -1.6, 0],
+    ["S", -0.8, 0],
+    ["T", -0.7, 0],
+    ["W", -0.9, 6.93],
+    ["Y", -1.3, 5.06],
+    ["V", 4.2, 0],
+]
+
+# Crear un DataFrame de Pandas
+df = pd.DataFrame(data[1:], columns=data[0])
+
+# Guardar el DataFrame en un archivo CSV
+df.to_csv('index.csv', sep=',', index=False)
+
+
+
+# %%//////////////////// To add a column with the sum of Hydropathy and Amphiphilicity based od the amino acid sequence ///////////////////
+import pandas as pd
+
+# Leer el archivo CSV con las secuencias
+df_secuencias = pd.read_csv('AMP_analisis5.csv')  # Reemplaza con la ruta correcta
+
+# Leer el DataFrame original con la tabla de valores
+df_valores = pd.read_csv('index.csv')  # Reemplaza con la ruta correcta
+
+# Función para calcular la suma de valores para una secuencia dada
+def calcular_suma(secuencia):
+    return sum(df_valores.loc[df_valores['Letter'].isin(list(secuencia)), 'Amphiphilicity'])
+
+# Agregar una nueva columna al DataFrame de secuencias con las sumas calculadas
+df_secuencias['Sum_Amphiphilicity'] = df_secuencias['sequence'].apply(calcular_suma)
+
+# Guardar el resultado en un nuevo archivo CSV
+df_secuencias.to_csv('AMP_analisis6.csv', index=False)  # Reemplaza con la ruta deseada
+
+
+#%% ///////////////////// Amphiphilicity Distributions​////////////////////////////////
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# AMP Dataset
+df_amp = pd.read_csv('AMP_analisis6.csv')
+
+
+# Calculate mean and standard deviation
+mean_amp = df_amp['Sum_Amphiphilicity'].mean()
+std_amp = df_amp['Sum_Amphiphilicity'].std()
+
+# Histogram of sequence lengths
+values_amp, edges_amp, _ = plt.hist(df_amp['Sum_Amphiphilicity'], bins=100, color="g") 
+plt.xlabel('Sequence Amphiphilicity')
+plt.ylabel('Frequency')
+plt.title('Distribution of Sequence Amphiphilicity - AMP')
+
+# Add legend with mean and standard deviation
+plt.text(0.95, 0.85, f"Mean: {mean_amp:.2f}\nStd: {std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'))
+
+plt.show()
+
+# ------------------------------Non-AMP Dataset------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis6.csv')
+
+# Calculate mean and standard deviation
+mean_nonamp = df_nonamp['Sum_Amphiphilicity'].mean()
+std_nonamp = df_nonamp['Sum_Amphiphilicity'].std()
+
+# Histogram of sequence lengths
+values_nonamp, edges_nonamp, _ = plt.hist(df_nonamp['Sum_Amphiphilicity'], bins=100, color="firebrick") 
+plt.xlabel('Sequence Amphiphilicity')
+plt.ylabel('Frequency')
+plt.title('Distribution of Sequence Amphiphilicity - nonAMP')
+
+# Add legend with mean and standard deviation
+plt.text(0.95, 0.85, f"Mean: {mean_nonamp:.2f}\nStd: {std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'))
+
+plt.show()
+#%% ///////////////////// Hydropathy Distributions​////////////////////////////////
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# AMP Dataset
+df_amp = pd.read_csv('AMP_analisis6.csv')
+
+
+# Calculate mean and standard deviation
+mean_amp = df_amp['Sum_Hydropathy'].mean()
+std_amp = df_amp['Sum_Hydropathy'].std()
+
+# Histogram of sequence lengths
+values_amp, edges_amp, _ = plt.hist(df_amp['Sum_Hydropathy'], bins=100, color="g") 
+plt.xlabel('Sequence Hydropathy')
+plt.ylabel('Frequency')
+plt.title('Distribution of Sequence Hydropathy - AMP')
+
+# Add legend with mean and standard deviation
+plt.text(0.95, 0.85, f"Mean: {mean_amp:.2f}\nStd: {std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'))
+
+plt.show()
+
+# ------------------------------Non-AMP Dataset------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis6.csv')
+
+# Calculate mean and standard deviation
+mean_nonamp = df_nonamp['Sum_Hydropathy'].mean()
+std_nonamp = df_nonamp['Sum_Hydropathy'].std()
+
+# Histogram of sequence lengths
+values_nonamp, edges_nonamp, _ = plt.hist(df_nonamp['Sum_Hydropathy'], bins=100, color="firebrick") 
+plt.xlabel('Sequence Hydropathy')
+plt.ylabel('Frequency')
+plt.title('Distribution of Sequence Hydropathy - nonAMP')
+
+# Add legend with mean and standard deviation
+plt.text(0.95, 0.85, f"Mean: {mean_nonamp:.2f}\nStd: {std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'))
+
+plt.show()
+
+# %% //////////////////////// Secondary Structure Prediction //////////////////////////////////////////
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def predict_secondary_structure(peptide_sequence):
+    protein_analysis = ProteinAnalysis(peptide_sequence)
+    sheet, turn, helix = protein_analysis.secondary_structure_fraction()
+    return sheet, turn, helix
+
+# ------------------------ AMP Dataset-------------------------------------------
+df_amp = pd.read_csv('AMP_analisis6.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_amp['helix'] = df_amp['sequence'].apply(lambda x: predict_secondary_structure(x)[2])
+df_amp['turn'] = df_amp['sequence'].apply(lambda x: predict_secondary_structure(x)[1])
+df_amp['sheet'] = df_amp['sequence'].apply(lambda x: predict_secondary_structure(x)[0])
+
+# Calcular medias y desviaciones estándar
+helix_mean_amp = df_amp['helix'].mean()
+helix_std_amp = df_amp['helix'].std()
+turn_mean_amp = df_amp['turn'].mean()
+turn_std_amp = df_amp['turn'].std()
+sheet_mean_amp = df_amp['sheet'].mean()
+sheet_std_amp = df_amp['sheet'].std()
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_amp.to_csv('AMP_analisis7.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_helix, edges_helix, _ = plt.hist(df_amp['helix'], bins=100, color="g", alpha=0.9, label="Helix") 
+values_turn, edges_turn, _ = plt.hist(df_amp['turn'], bins=100, color="b", alpha=0.5, label="Turn") 
+values_sheet, edges_sheet, _ = plt.hist(df_amp['sheet'], bins=100, color="r", alpha=0.2, label="Sheet") 
+
+plt.xlabel('Secondary Structure Fraction ',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Secondary Structure of AMP ',size= 15)
+
+# Agregar leyenda
+plt.legend(fontsize='20')
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.055, f"Helix: Mean={helix_mean_amp:.2f}, Std={helix_std_amp:.2f}\nTurn: Mean={turn_mean_amp:.2f}, Std={turn_std_amp:.2f}\nSheet: Mean={sheet_mean_amp:.2f}, Std={sheet_std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+# ------------------------ nonAMP Dataset-------------------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis6.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_nonamp['helix'] = df_nonamp['sequence'].apply(lambda x: predict_secondary_structure(x)[2])
+df_nonamp['turn'] = df_nonamp['sequence'].apply(lambda x: predict_secondary_structure(x)[1])
+df_nonamp['sheet'] = df_nonamp['sequence'].apply(lambda x: predict_secondary_structure(x)[0])
+
+# Calcular medias y desviaciones estándar
+helix_mean_nonamp = df_nonamp['helix'].mean()
+helix_std_nonamp = df_nonamp['helix'].std()
+turn_mean_nonamp = df_nonamp['turn'].mean()
+turn_std_nonamp = df_nonamp['turn'].std()
+sheet_mean_nonamp = df_nonamp['sheet'].mean()
+sheet_std_nonamp = df_nonamp['sheet'].std()
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_nonamp.to_csv('nonAMP_analisis7.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_helix, edges_helix, _ = plt.hist(df_nonamp['helix'], bins=100, color="g", alpha=0.9, label="Helix") 
+values_turn, edges_turn, _ = plt.hist(df_nonamp['turn'], bins=100, color="b", alpha=0.5, label="Turn") 
+values_sheet, edges_sheet, _ = plt.hist(df_nonamp['sheet'], bins=100, color="r", alpha=0.2, label="Sheet") 
+
+plt.xlabel('Secondary Structure Fraction ',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Secondary Structure of nonAMP ',size= 15)
+
+# Agregar leyenda
+plt.legend(fontsize='20')
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.055, f"Helix: Mean={helix_mean_nonamp:.2f}, Std={helix_std_nonamp:.2f}\nTurn: Mean={turn_mean_nonamp:.2f}, Std={turn_std_nonamp:.2f}\nSheet: Mean={sheet_mean_nonamp:.2f}, Std={sheet_std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+
+# %%
+import Bio
+print('Biopython version:', Bio.__version__)
+
+# %%
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
+# Función para contar el número de anillos en una molécula
+def contar_anillos(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return "Error: No se pudo parsear la molécula"
+    
+    # Percepción de anillos
+    AllChem.Compute2DCoords(mol)
+    ri = mol.GetRingInfo()
+    
+    # Contar el número de anillos únicos
+    num_anillos = len(ri.BondRings())
+    
+    return num_anillos
+
+# Ejemplo de uso
+smiles_molecula = "CCO"  # Reemplaza esto con el SMILES de tu molécula
+numero_de_anillos = contar_anillos(smiles_molecula)
+
+print(f"La molécula tiene {numero_de_anillos} anillos.")
+
+# %% ////////////////////////// FAI /////////////////////////////////////////////////
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def fai(sequence):
+    helm = peptide_to_helm(sequence)
+    mol = Chem.MolFromHELM(helm)
+    num_anillos = rdMolDescriptors.CalcNumRings(mol)
+    
+    charged_amino_acids = {'R': 2, 'H': 1, 'K': 2}
+    cationic_charges = sum(sequence.count(aa) * charge for aa, charge in charged_amino_acids.items())
+
+    # para evitar un error matemático
+    if num_anillos == 0:
+        return 0
+
+    return (cationic_charges / num_anillos)
+
+
+# Convertir a notación HELM para usar RDKit
+def peptide_to_helm(sequence):
+    polymer_id = 1
+    sequence_helm = "".join(sequence)
+    
+    sequence_helm = ''.join([c + '.' if c.isupper() else c for i, c in enumerate(sequence_helm)])
+    sequence_helm = sequence_helm.rstrip('.')
+    
+    sequence_helm = f"PEPTIDE{polymer_id}{{{sequence_helm}}}$$$$"
+    
+    return sequence_helm
+
+
+# ------------------------ AMP Dataset-------------------------------------------
+df_amp = pd.read_csv('AMP_analisis7.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_amp['FAI'] = df_amp['sequence'].apply(lambda x: fai(x))
+
+
+# Calcular medias y desviaciones estándar
+fai_mean_amp = df_amp['FAI'].mean()
+fai_std_amp = df_amp['FAI'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_amp.to_csv('AMP_analisis8.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_fai, edges_fai, _ = plt.hist(df_amp['FAI'], bins=100, color="g", alpha=0.9) 
+plt.xlabel('FAI',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of FAI - AMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={fai_mean_amp:.2f}\nStd={fai_std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# ------------------------ nonAMP Dataset-------------------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis7.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_nonamp['FAI'] = df_nonamp['sequence'].apply(lambda x: fai(x))
+
+
+# Calcular medias y desviaciones estándar
+fai_mean_nonamp = df_nonamp['FAI'].mean()
+fai_std_nonamp = df_nonamp['FAI'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_nonamp.to_csv('nonAMP_analisis8.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_fai, edges_fai, _ = plt.hist(df_nonamp['FAI'], bins=100, color="r", alpha=0.9) 
+plt.xlabel('FAI',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of FAI - nonAMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={fai_mean_nonamp:.2f}\nStd={fai_std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
 # %%
