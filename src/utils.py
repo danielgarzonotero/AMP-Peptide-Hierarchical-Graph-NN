@@ -62,6 +62,7 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
     sequence= get_sequence(sequence)
     peptide_features = torch.tensor(np.array([peptide_ft_dict[sequence]]), dtype=torch.float32, device=device)
     
+    y = label_representation(y, device)
 
     geo_dp = Data(x=nodes_features,
                   y=y,
@@ -71,9 +72,19 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
                   cc = cc,
                   )
     
-    return geo_dp, aminoacids_features, blosum62, peptide_features
+    return geo_dp, aminoacids_features, blosum62, peptide_features, sequence 
 
 
+
+def label_representation(y, device):
+    if y == 1:
+        
+        return torch.tensor(np.array([1]), dtype=torch.long, device=device)
+    elif y == 0:
+        return torch.tensor(np.array([0]), dtype=torch.long, device=device)
+    else:
+        raise ValueError("Invalid value for y. It should be either 0 or 1.")
+    
 
 #Atomic Features
 

@@ -9,7 +9,7 @@ import numpy as np
 def train(model, device, dataloader, optim, epoch):
     model.train()
     
-    loss_func = torch.nn.BCEWithLogitsLoss() #TODO
+    loss_func = torch.nn.BCELoss() #TODO
     loss_collect = 0
 
     # Looping over the dataloader allows us to pull out input/output data:
@@ -21,13 +21,8 @@ def train(model, device, dataloader, optim, epoch):
         # Make a prediction:
         pred = model(batch)
         
-        # Convertir la lista de etiquetas a un tensor
-        labels_list = [label_representation(y, device) for y in batch.y]
-        y_labels_tensor = torch.stack(labels_list)
-
-
         # Calculate the loss:
-        loss = loss_func(pred.double(), y_labels_tensor.double())
+        loss = loss_func(pred.double(), batch.y.double())
 
         # Backpropagation:
         loss.backward()
@@ -50,7 +45,7 @@ def validation(model, device, dataloader, epoch):
 
     model.eval()
     loss_collect = 0
-    loss_func = torch.nn.BCEWithLogitsLoss()
+    loss_func = torch.nn.BCELoss()
         
     # Remove gradients:
     with torch.no_grad():
@@ -62,13 +57,9 @@ def validation(model, device, dataloader, epoch):
             # Make a prediction:
             pred = model(batch)
             
-            # Convertir la lista de etiquetas a un tensor
-            labels_list = [label_representation(y, device) for y in batch.y]
-            y_labels_tensor = torch.stack(labels_list)
-
 
             # Calculate the loss:
-            loss = loss_func(pred.double(), y_labels_tensor.double())  
+            loss = loss_func(pred.double(), batch.y.double())  
 
             # Calculate the loss and add it to our total loss
             loss_collect += loss.item()  # loss summed across the batch
@@ -87,7 +78,7 @@ def validation(model, device, dataloader, epoch):
 
 
 def predict_test(model, dataloader, device, weights_file):
-    
+    diccionario = torch.load('data/dictionaries/sequences_dict.pt')
     model.eval()
     model.load_state_dict(torch.load(weights_file))
 
@@ -104,27 +95,14 @@ def predict_test(model, dataloader, device, weights_file):
             # Make a prediction:
             pred = model(batch.to(device))
             
-            labels_list = [label_representation(y, device) for y in batch.y]
-            y_labels_tensor = torch.stack(labels_list)
-            
-            X_all.append(batch.x.to(device))
-            y_all.append(y_labels_tensor)
+            X_all.extend([diccionario[cci.item()] for cci in batch.cc])
+            y_all.append(batch.y.double())
             pred_all.append(pred)
 
     # Concatenate the lists of tensors into a single tensor
-    X_all = torch.cat(X_all, dim=0)
     y_all = torch.cat(y_all, dim=0)
     pred_all = torch.cat(pred_all, dim=0)
 
     return X_all, y_all, pred_all
 
 
-def label_representation(y, device):
-    if y == 1:
-        
-        return torch.tensor(np.array([1]), dtype=torch.long, device=device)
-    elif y == 0:
-        return torch.tensor(np.array([0]), dtype=torch.long, device=device)
-    else:
-        raise ValueError("Invalid value for y. It should be either 0 or 1.")
-    

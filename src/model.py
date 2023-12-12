@@ -51,7 +51,7 @@ class GCN_Geo(torch.nn.Module):
         self.linear2 = nn.Linear(hidden_dim_fcn_1, hidden_dim_fcn_2 )
         self.linear3 = nn.Linear(hidden_dim_fcn_2, hidden_dim_fcn_3) 
         self.linear4 = nn.Linear(hidden_dim_fcn_3, 1) #TODO 
-        
+        self.sigmoid = nn.Sigmoid()
         
         # self.sigmoid = nn.Sigmoid()
         
@@ -105,10 +105,12 @@ class GCN_Geo(torch.nn.Module):
         p = F.relu(p)
         
         p = self.linear3(p)
-    
+        p = F.relu(p)
+        
         p = self.linear4(p)
-    
-        return p
+        p = self.sigmoid(p)
+
+        return p.view(-1,)
 
 
 device_info_instance = device_info()

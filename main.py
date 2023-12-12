@@ -103,7 +103,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 300
+number_of_epochs = 50
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch)
@@ -205,8 +205,19 @@ plt.legend(loc='lower right')
 plt.show()
 
 #-------------------------------------------- ////////// Validation Set //////////-------------------------------------------------
-
 input_all, target_all_validation, pred_prob_all_validation = predict_test(model, val_dataloader, device, weights_file)
+
+#Saving a CSV file with prediction values
+
+prediction_validation_set = {
+                            'Sequence':input_all,
+                            'Target': target_all_validation.cpu().numpy(),
+                            'Prediction':  pred_prob_all_validation.cpu().numpy()
+                            }
+
+df = pd.DataFrame(prediction_validation_set)
+df.to_csv('results/prediction_validation_set.csv', index=False)
+
 
 bcm = BinaryConfusionMatrix(task="binary", threshold=threshold, num_classes=2).to(device)  #TODO
 confusion_matrix = bcm(pred_prob_all_validation, target_all_validation)

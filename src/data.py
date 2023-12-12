@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-import sys
 import torch
 from torch_geometric.data import InMemoryDataset
 
@@ -38,6 +37,7 @@ class GeoDataset(InMemoryDataset):
         aminoacids_features_dict = {} #We use this dictionaries in the forward to call the amino and peptide features for each peptide in the batch
         blosum62_dict = {}
         peptides_features_dict = {}
+        sequences_dict = {}
         
         for i, (x, y) in enumerate(zip(self.x, self.y)):
             device_info_instance = device_info()
@@ -47,6 +47,7 @@ class GeoDataset(InMemoryDataset):
             aminoacids_features_dict[cc] = sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[1]
             blosum62_dict[cc] = sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[2]
             peptides_features_dict[cc]   = sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[3]
+            sequences_dict[cc] = sequences_geodata(cc, x, y, peptide_ft_dic, amino_ft_dict, node_ft_dict, edge_ft_dict, device)[4]
             
             cc += 1
             
@@ -70,11 +71,13 @@ class GeoDataset(InMemoryDataset):
         aminoacids_features_dict_path = os.path.join(dictionaries_path, 'aminoacids_features_dict.pt')
         blosum62_dict_path = os.path.join(dictionaries_path, 'blosum62_dict.pt')
         peptides_features_dict_path = os.path.join(dictionaries_path, 'peptides_features_dict.pt')
+        sequences_dict_path = os.path.join(dictionaries_path, 'sequences_dict.pt')
 
         # Guarda los diccionarios 
         torch.save(aminoacids_features_dict, aminoacids_features_dict_path)
         torch.save(blosum62_dict, blosum62_dict_path)
         torch.save(peptides_features_dict, peptides_features_dict_path)
+        torch.save(sequences_dict , sequences_dict_path)
 
      
 
