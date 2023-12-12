@@ -575,31 +575,6 @@ plt.show()
 import Bio
 print('Biopython version:', Bio.__version__)
 
-# %%
-from rdkit import Chem
-from rdkit.Chem import AllChem
-
-# Función para contar el número de anillos en una molécula
-def contar_anillos(smiles):
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        return "Error: No se pudo parsear la molécula"
-    
-    # Percepción de anillos
-    AllChem.Compute2DCoords(mol)
-    ri = mol.GetRingInfo()
-    
-    # Contar el número de anillos únicos
-    num_anillos = len(ri.BondRings())
-    
-    return num_anillos
-
-# Ejemplo de uso
-smiles_molecula = "CCO"  # Reemplaza esto con el SMILES de tu molécula
-numero_de_anillos = contar_anillos(smiles_molecula)
-
-print(f"La molécula tiene {numero_de_anillos} anillos.")
-
 # %% ////////////////////////// FAI /////////////////////////////////////////////////
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
@@ -696,4 +671,452 @@ plt.text(0.95, 0.85, f"Mean={fai_mean_nonamp:.2f}\nStd={fai_std_nonamp:.2f}",
 
 plt.show()
 
+# %%//////////////////////////// Molecular Weight //////////////////////////////////
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def mw_peptide(peptide_sequence):
+    peptide_analysis = ProteinAnalysis(peptide_sequence)
+    mw_peptide = peptide_analysis .molecular_weight()
+    
+    return mw_peptide
+
+# ------------------------ AMP Dataset-------------------------------------------
+df_amp = pd.read_csv('AMP_analisis8.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_amp['molecular_weight'] = df_amp['sequence'].apply(lambda x: mw_peptide(x))
+
+
+# Calcular medias y desviaciones estándar
+mw_mean_amp = df_amp['molecular_weight'].mean()
+mw_std_amp = df_amp['molecular_weight'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_amp.to_csv('AMP_analisis9.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_fai, edges_fai, _ = plt.hist(df_amp['molecular_weight'], bins=100, color="g", alpha=0.9) 
+plt.xlabel('Molecular Weight [Da]',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Molecular Weight - AMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={mw_mean_amp:.2f}\nStd={mw_std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# ------------------------ nonAMP Dataset-------------------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis8.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_nonamp['molecular_weight'] = df_nonamp['sequence'].apply(lambda x: mw_peptide(x))
+
+
+# Calcular medias y desviaciones estándar
+mw_mean_nonamp = df_nonamp['molecular_weight'].mean()
+mw_std_nonamp = df_nonamp['molecular_weight'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_nonamp.to_csv('nonAMP_analisis9.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_fai, edges_fai, _ = plt.hist(df_nonamp['molecular_weight'], bins=100, color="r", alpha=0.9) 
+plt.xlabel('Molecular Weight [Da]',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Molecular Weight - nonAMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={mw_mean_nonamp:.2f}\nStd={mw_std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# %%//////////////////////////// Hidrophobicity //////////////////////////////////
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def hidrophobicity(peptide_sequence):
+    peptide_analysis = ProteinAnalysis(peptide_sequence)
+    hidrophobicity = peptide_analysis.gravy()
+    
+    return hidrophobicity
+
+# ------------------------ AMP Dataset-------------------------------------------
+df_amp = pd.read_csv('AMP_analisis9.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_amp['hidrophobicity'] = df_amp['sequence'].apply(lambda x: hidrophobicity(x))
+
+
+# Calcular medias y desviaciones estándar
+hidro_mean_amp = df_amp['hidrophobicity'].mean()
+hidro_std_amp = df_amp['hidrophobicity'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_amp.to_csv('AMP_analisis10.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values, edges, _ = plt.hist(df_amp['hidrophobicity'], bins=100, color="g", alpha=0.9) 
+plt.xlabel('Hidrophobicity',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Hidrophobicity - AMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={hidro_mean_amp:.2f}\nStd={hidro_std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# ------------------------ nonAMP Dataset-------------------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis9.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_nonamp['hidrophobicity'] = df_nonamp['sequence'].apply(lambda x: hidrophobicity(x))
+
+
+# Calcular medias y desviaciones estándar
+hidro_mean_nonamp = df_nonamp['hidrophobicity'].mean()
+hidro_std_nonamp = df_nonamp['hidrophobicity'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_nonamp.to_csv('nonAMP_analisis10.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values, edges, _ = plt.hist(df_nonamp['hidrophobicity'], bins=100, color="r", alpha=0.9) 
+plt.xlabel('Hidrophobicity',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Hidrophobicity - AMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={hidro_mean_nonamp:.2f}\nStd={hidro_std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
 # %%
+# %%//////////////////////////// Hydrophobicity //////////////////////////////////
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def hidrophobicity(peptide_sequence):
+    peptide_analysis = ProteinAnalysis(peptide_sequence)
+    hidrophobicity = peptide_analysis.gravy()
+    
+    return hidrophobicity
+
+# ------------------------ AMP Dataset-------------------------------------------
+df_amp = pd.read_csv('AMP_analisis9.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_amp['hidrophobicity'] = df_amp['sequence'].apply(lambda x: hidrophobicity(x))
+
+
+# Calcular medias y desviaciones estándar
+hidro_mean_amp = df_amp['hidrophobicity'].mean()
+hidro_std_amp = df_amp['hidrophobicity'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_amp.to_csv('AMP_analisis10.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values, edges, _ = plt.hist(df_amp['hidrophobicity'], bins=100, color="g", alpha=0.9) 
+plt.xlabel('Hydrophobicity',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Hydrophobicity - AMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={hidro_mean_amp:.2f}\nStd={hidro_std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# ------------------------ nonAMP Dataset-------------------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis9.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_nonamp['hidrophobicity'] = df_nonamp['sequence'].apply(lambda x: hidrophobicity(x))
+
+
+# Calcular medias y desviaciones estándar
+hidro_mean_nonamp = df_nonamp['hidrophobicity'].mean()
+hidro_std_nonamp = df_nonamp['hidrophobicity'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_nonamp.to_csv('nonAMP_analisis10.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values, edges, _ = plt.hist(df_nonamp['hidrophobicity'], bins=100, color="r", alpha=0.9) 
+plt.xlabel('Hydrophobicity',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Hydrophobicity - nonAMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={hidro_mean_nonamp:.2f}\nStd={hidro_std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+# %%//////////////////////////// Aromaticity//////////////////////////////////
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def aromaticity(peptide_sequence):
+    peptide_analysis = ProteinAnalysis(peptide_sequence)
+    aromaticity = peptide_analysis.aromaticity()
+    
+    return aromaticity
+
+# ------------------------ AMP Dataset-------------------------------------------
+df_amp = pd.read_csv('AMP_analisis10.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_amp['aromaticity'] = df_amp['sequence'].apply(lambda x: aromaticity(x))
+
+
+# Calcular medias y desviaciones estándar
+aro_mean_amp = df_amp['aromaticity'].mean()
+aro_std_amp = df_amp['aromaticity'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_amp.to_csv('AMP_analisis11.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_fai, edges_fai, _ = plt.hist(df_amp['aromaticity'], bins=100, color="g", alpha=0.9) 
+plt.xlabel('Aromaticity',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Aromaticity- AMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={aro_mean_amp:.2f}\nStd={aro_std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# ------------------------ nonAMP Dataset-------------------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis10.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_nonamp['aromaticity'] = df_nonamp['sequence'].apply(lambda x: aromaticity(x))
+
+
+# Calcular medias y desviaciones estándar
+aro_mean_nonamp = df_nonamp['aromaticity'].mean()
+aro_std_nonamp = df_nonamp['aromaticity'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_nonamp.to_csv('nonAMP_analisis11.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values, edges, _ = plt.hist(df_nonamp['aromaticity'], bins=100, color="r", alpha=0.9) 
+plt.xlabel('Aromaticity',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Aromaticity- nonAMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={aro_mean_nonamp:.2f}\nStd={aro_std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# %%//////////////////////////// Isoelectric_Point//////////////////////////////////
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def isoelectric_point(peptide_sequence):
+    peptide_analysis = ProteinAnalysis(peptide_sequence)
+    isoelectric_point = peptide_analysis.isoelectric_point()
+    
+    return isoelectric_point
+
+# ------------------------ AMP Dataset-------------------------------------------
+df_amp = pd.read_csv('AMP_analisis11.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_amp['isoelectric_point'] = df_amp['sequence'].apply(lambda x: isoelectric_point(x))
+
+
+# Calcular medias y desviaciones estándar
+iso_mean_amp = df_amp['isoelectric_point'].mean()
+iso_std_amp = df_amp['isoelectric_point'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_amp.to_csv('AMP_analisis12.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_iso, edges_iso, _ = plt.hist(df_amp['isoelectric_point'], bins=100, color="g", alpha=0.9) 
+plt.xlabel('Isoelectric Point',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Isoelectric Point - AMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={iso_mean_amp:.2f}\nStd={iso_std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# ------------------------ nonAMP Dataset-------------------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis11.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_nonamp['isoelectric_point'] = df_nonamp['sequence'].apply(lambda x: isoelectric_point(x))
+
+
+# Calcular medias y desviaciones estándar
+iso_mean_nonamp = df_nonamp['isoelectric_point'].mean()
+iso_std_nonamp = df_nonamp['isoelectric_point'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_nonamp.to_csv('nonAMP_analisis12.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values_iso, edges_iso, _ = plt.hist(df_nonamp['isoelectric_point'], bins=100, color="r", alpha=0.9) 
+plt.xlabel('Isoelectric Point',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Isoelectric Point - nonAMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={iso_mean_nonamp:.2f}\nStd={iso_std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# %%//////////////////////////// Instability Index //////////////////////////////////
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def instability_index(peptide_sequence):
+    peptide_analysis = ProteinAnalysis(peptide_sequence)
+    instability_index= peptide_analysis.instability_index()
+    
+    return instability_index
+
+# ------------------------ AMP Dataset-------------------------------------------
+df_amp = pd.read_csv('AMP_analisis12.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_amp['instability_index'] = df_amp['sequence'].apply(lambda x: instability_index(x))
+
+
+# Calcular medias y desviaciones estándar
+inex_mean_amp = df_amp['instability_index'].mean()
+inex_std_amp = df_amp['instability_index'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_amp.to_csv('AMP_analisis13.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values, edges, _ = plt.hist(df_amp['instability_index'], bins=100, color="g", alpha=0.9) 
+plt.xlabel('Instability Index',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Instability Index- AMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={inex_mean_amp:.2f}\nStd={inex_std_amp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
+
+# ------------------------ nonAMP Dataset-------------------------------------------
+df_nonamp = pd.read_csv('nonAMP_analisis12.csv')
+
+# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
+df_nonamp['instability_index'] = df_nonamp['sequence'].apply(lambda x: instability_index(x))
+
+
+# Calcular medias y desviaciones estándar
+inex_mean_nonamp = df_nonamp['instability_index'].mean()
+inex_std_nonamp = df_nonamp['instability_index'].std()
+
+
+# Guardar el DataFrame modificado en un nuevo archivo CSV
+df_nonamp.to_csv('nonAMP_analisis13.csv', sep=',', index=False)
+
+# Histograma de las longitudes de las secuencias
+plt.figure(figsize=(10, 6))
+
+values, edges, _ = plt.hist(df_nonamp['instability_index'], bins=100, color="r", alpha=0.9) 
+plt.xlabel('Instability Index',size= 15)
+plt.ylabel('Frequency',size= 15)
+plt.title('Distribution of Instability Index- nonAMP ',size= 15)
+
+# Añadir texto con medias y desviaciones estándar
+plt.text(0.95, 0.85, f"Mean={inex_mean_nonamp:.2f}\nStd={inex_std_nonamp:.2f}", 
+         transform=plt.gca().transAxes, ha='right', color='black',
+         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+plt.show()
+
