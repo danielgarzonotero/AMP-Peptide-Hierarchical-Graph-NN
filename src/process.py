@@ -9,7 +9,7 @@ import numpy as np
 def train(model, device, dataloader, optim, epoch):
     model.train()
     
-    loss_func = torch.nn.BCELoss() #TODO
+    loss_func = torch.nn.BCEWithLogitsLoss() #TODO
     loss_collect = 0
 
     # Looping over the dataloader allows us to pull out input/output data:
@@ -45,7 +45,7 @@ def validation(model, device, dataloader, epoch):
 
     model.eval()
     loss_collect = 0
-    loss_func = torch.nn.BCELoss()
+    loss_func = torch.nn.BCEWithLogitsLoss() 
         
     # Remove gradients:
     with torch.no_grad():
@@ -77,32 +77,50 @@ def validation(model, device, dataloader, epoch):
     return loss_collect
 
 
-def predict_test(model, dataloader, device, weights_file):
+def predict_test(model, dataloader, device, weights_file, threshold):
+    
     diccionario = torch.load('data/dictionaries/sequences_dict.pt')
+    
     model.eval()
     model.load_state_dict(torch.load(weights_file))
-
-    X_all = []
+    
+    x_all = []
     y_all = []
     pred_all = []
-
+    
+    pred_all_csv = []
+    
     # Remove gradients:
     with torch.no_grad():
 
         # Looping over the dataloader allows us to pull out input/output data:
         for batch in dataloader:
-
             # Make a prediction:
             pred = model(batch.to(device))
+            #to be able to round and saving in a csv file as prediction results
+            pred_sigmoid = torch.sigmoid(pred)
             
-            X_all.extend([diccionario[cci.item()] for cci in batch.cc])
+            x_all.extend([diccionario[cci.item()] for cci in batch.cc])
             y_all.append(batch.y.double())
             pred_all.append(pred)
+            
+            pred_all_csv.append(pred_sigmoid)
+            
+            
 
     # Concatenate the lists of tensors into a single tensor
     y_all = torch.cat(y_all, dim=0)
     pred_all = torch.cat(pred_all, dim=0)
+    
+    #This is to export the prediction rounded based on the threshold
+    pred_all_csv = torch.cat(pred_all_csv, dim=0)
+    pred_all_csv = [custom_round(pred, threshold) for pred in pred_all_csv]
+    
+    return x_all, y_all, pred_all, pred_all_csv
 
-    return X_all, y_all, pred_all
+
+def custom_round(pred, threshold):
+    return 1 if pred >= threshold else 0
+
 
 
