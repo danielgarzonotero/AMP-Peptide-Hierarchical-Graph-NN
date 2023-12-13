@@ -140,7 +140,17 @@ weights_file = "best_model_weights.pth"
 threshold=0.4
 
 # ------------------------------------////////// Training set /////////////---------------------------------------------------
-input_all, target_all_train, pred_prob_all_train, pred_all_csv_train = predict_test(model, train_dataloader, device, weights_file, threshold)
+input_all_train, target_all_train, pred_prob_all_train, pred_all_csv_train = predict_test(model, train_dataloader, device, weights_file, threshold)
+
+#Saving a CSV file with prediction values
+prediction_train_set = {
+                            'Sequence':input_all_train,
+                            'Target': target_all_train.cpu().numpy(),
+                            'Prediction':  pred_all_csv_train
+                            }
+
+df = pd.DataFrame(prediction_train_set)
+df.to_excel('results/prediction_training_set.xlsx', index=False)
 
 bcm = BinaryConfusionMatrix(task="binary", threshold=threshold, num_classes=2).to(device) #TODO
 confusion_matrix = bcm(pred_prob_all_train, target_all_train)
@@ -205,12 +215,11 @@ plt.legend(loc='lower right')
 plt.show()
 
 #-------------------------------------------- ////////// Validation Set //////////-------------------------------------------------
-input_all, target_all_validation, pred_prob_all_validation, pred_all_csv_validation = predict_test(model, val_dataloader, device, weights_file, threshold)
+input_all_validation, target_all_validation, pred_prob_all_validation, pred_all_csv_validation = predict_test(model, val_dataloader, device, weights_file, threshold)
 
 #Saving a CSV file with prediction values
-
 prediction_validation_set = {
-                            'Sequence':input_all,
+                            'Sequence':input_all_validation,
                             'Target': target_all_validation.cpu().numpy(),
                             'Prediction':  pred_all_csv_validation
                             }
@@ -279,7 +288,17 @@ plt.legend(loc='lower right')
 plt.show()
 
 # --------------------------------------------////////// Test Set //////////---------------------------------------------------
-input_all, target_all_test, pred_prob_all_test, pred_all_csv_test = predict_test(model, test_dataloader, device, weights_file,threshold )
+input_all_test, target_all_test, pred_prob_all_test, pred_all_csv_test = predict_test(model, test_dataloader, device, weights_file,threshold )
+
+#Saving a CSV file with prediction values
+prediction_test_set = {
+                            'Sequence':input_all_test,
+                            'Target': target_all_test.cpu().numpy(),
+                            'Prediction':  pred_all_csv_test
+                            }
+
+df = pd.DataFrame(prediction_test_set)
+df.to_excel('results/prediction_test_set.xlsx', index=False)
 
 bcm = BinaryConfusionMatrix(task="binary",threshold=threshold, num_classes=2).to(device) #TODO
 confusion_matrix = bcm(pred_prob_all_test, target_all_test)
@@ -321,6 +340,7 @@ f1_score_test = 2 * (precision_test * recall_test) / (precision_test + recall_te
 
 # Imprimir las métricas
 print('///Evaluation Metrics - Test///\n') 
+print(f"Accuracy: {accuracy_test:.3f}")
 print(f"Precision: {precision_test:.3f}")
 print(f"Recall: {recall_test:.3f}")
 print(f"Specificity: {specificity_test:.3f}")

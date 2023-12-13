@@ -746,80 +746,6 @@ plt.text(0.95, 0.85, f"Mean={mw_mean_nonamp:.2f}\nStd={mw_std_nonamp:.2f}",
 plt.show()
 
 
-# %%//////////////////////////// Hidrophobicity //////////////////////////////////
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
-import pandas as pd
-import matplotlib.pyplot as plt
-
-def hidrophobicity(peptide_sequence):
-    peptide_analysis = ProteinAnalysis(peptide_sequence)
-    hidrophobicity = peptide_analysis.gravy()
-    
-    return hidrophobicity
-
-# ------------------------ AMP Dataset-------------------------------------------
-df_amp = pd.read_csv('AMP_analisis9.csv')
-
-# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
-df_amp['hidrophobicity'] = df_amp['sequence'].apply(lambda x: hidrophobicity(x))
-
-
-# Calcular medias y desviaciones estándar
-hidro_mean_amp = df_amp['hidrophobicity'].mean()
-hidro_std_amp = df_amp['hidrophobicity'].std()
-
-
-# Guardar el DataFrame modificado en un nuevo archivo CSV
-df_amp.to_csv('AMP_analisis10.csv', sep=',', index=False)
-
-# Histograma de las longitudes de las secuencias
-plt.figure(figsize=(10, 6))
-
-values, edges, _ = plt.hist(df_amp['hidrophobicity'], bins=100, color="g", alpha=0.9) 
-plt.xlabel('Hidrophobicity',size= 15)
-plt.ylabel('Frequency',size= 15)
-plt.title('Distribution of Hidrophobicity - AMP ',size= 15)
-
-# Añadir texto con medias y desviaciones estándar
-plt.text(0.95, 0.85, f"Mean={hidro_mean_amp:.2f}\nStd={hidro_std_amp:.2f}", 
-         transform=plt.gca().transAxes, ha='right', color='black',
-         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
-
-plt.show()
-
-
-# ------------------------ nonAMP Dataset-------------------------------------------
-df_nonamp = pd.read_csv('nonAMP_analisis9.csv')
-
-# Añadir columnas con la longitud y la estructura secundaria de cada secuencia
-df_nonamp['hidrophobicity'] = df_nonamp['sequence'].apply(lambda x: hidrophobicity(x))
-
-
-# Calcular medias y desviaciones estándar
-hidro_mean_nonamp = df_nonamp['hidrophobicity'].mean()
-hidro_std_nonamp = df_nonamp['hidrophobicity'].std()
-
-
-# Guardar el DataFrame modificado en un nuevo archivo CSV
-df_nonamp.to_csv('nonAMP_analisis10.csv', sep=',', index=False)
-
-# Histograma de las longitudes de las secuencias
-plt.figure(figsize=(10, 6))
-
-values, edges, _ = plt.hist(df_nonamp['hidrophobicity'], bins=100, color="r", alpha=0.9) 
-plt.xlabel('Hidrophobicity',size= 15)
-plt.ylabel('Frequency',size= 15)
-plt.title('Distribution of Hidrophobicity - AMP ',size= 15)
-
-# Añadir texto con medias y desviaciones estándar
-plt.text(0.95, 0.85, f"Mean={hidro_mean_nonamp:.2f}\nStd={hidro_std_nonamp:.2f}", 
-         transform=plt.gca().transAxes, ha='right', color='black',
-         bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
-
-plt.show()
-
 
 # %%
 # %%//////////////////////////// Hydrophobicity //////////////////////////////////
@@ -1119,4 +1045,5 @@ plt.text(0.95, 0.85, f"Mean={inex_mean_nonamp:.2f}\nStd={inex_std_nonamp:.2f}",
          bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
 
 plt.show()
+
 
