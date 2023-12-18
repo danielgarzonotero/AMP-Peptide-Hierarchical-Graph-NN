@@ -1,3 +1,4 @@
+
 #%%
 
 from rdkit import Chem
@@ -5,6 +6,7 @@ from rdkit.Chem import rdMolDescriptors
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 def distribution(property, path_dataset, condition):
     # 1: Length
@@ -235,9 +237,9 @@ def distribution(property, path_dataset, condition):
         plt.hist(df_new['turn'], bins=100, color="b", alpha=0.5, label="Turn") 
         plt.hist(df_new['sheet'], bins=100, color="r", alpha=0.2, label="Sheet") 
 
-        plt.xlabel('Secondary Structure Fraction ',size= 15)
+        plt.xlabel('Secondary Structure Fraction ',size= 17)
         plt.ylabel('Frequency',size= 15)
-        plt.title(f"Distribution of {property} - {clase}",size= 15)
+        plt.title(f"Distribution of {property} - {clase}",size= 17)
 
         # Agregar leyenda
         plt.legend(fontsize='20')
@@ -253,21 +255,36 @@ def distribution(property, path_dataset, condition):
     else:
         plt.figure(figsize=(10, 6))
         plt.hist(df_new[property], bins=100, color=color, alpha=0.9) 
-        plt.xlabel(property, size= 15)
-        plt.ylabel('Frequency',size= 15)
-        plt.title(f"Distribution of property {property} - {clase}",size= 15)
+        plt.xlabel(property, size= 17)
+        plt.ylabel('Frequency',size= 17)
+        plt.title(f"Distribution of property {property} - {clase}",size= 17)
 
         # Añadir texto con medias y desviaciones estándar
         plt.text(0.95, 0.85, f"Mean={mean:.2f}\nStd={std:.2f}", 
                 transform=plt.gca().transAxes, ha='right', color='black',
-                bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 14)
+                bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 17)
         plt.show()
 
 
 
-# AMP Dataset
-distribution(11, 'prediction_test_set.xlsx', 'tp')
 
-# Non-AMP Dataset
-#distribution(1, 'nonAMP_analisis.csv', 'nonamp')
+#Function to printing faster:
+
+def printing(dataset, tipo):
+    print(f"////////// {tipo} Dataset //////////")
+    properties = np.arange(1, 12)
+    conditions = ['verdaderos', 'falsos', 'tp', 'tn','fn', 'fp']   
+    for condition in conditions:
+        for property in properties:
+                distribution(property, dataset, condition)
+            
+#Printing
+#--------Training---------:
+#printing('prediction_training_set.xlsx', 'Trainig')
+#--------Validation-------:
+printing('prediction_validation_set.xlsx', 'Validation')
+#---------Test---------:
+#printing('prediction_test_set.xlsx', 'Test')
+
+
 # %%
