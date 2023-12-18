@@ -93,9 +93,12 @@ model = GCN_Geo(
 
 
 # Set up optimizer:
-learning_rate = 1E-3
+learning_rate = 1E-2
 weight_decay = 1E-5 #TODO
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+# Definir el scheduler ReduceLROnPlateau
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, verbose= True, mode='min', patience=7, factor=0.1)
+
 
 train_losses = []
 val_losses = []
@@ -103,7 +106,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 300
+number_of_epochs = 50
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch)
@@ -111,14 +114,17 @@ for epoch in range(1, number_of_epochs+1):
 
     val_loss = validation(model, device, val_dataloader, epoch)
     val_losses.append(val_loss)
+
+    # Programar la tasa de aprendizaje basada en la pérdida de validación
+    scheduler.step(val_loss)
     
     if val_loss < best_val_loss:
         best_val_loss = val_loss
-        
         torch.save(model.state_dict(), "best_model_weights.pth")
-     
+
 finish_time_training = time.time()
 time_training = (finish_time_training - start_time_training) / 60
+
 
 #Lose curves
 plt.plot(train_losses, label='Training loss', color='darkorange') 
@@ -132,8 +138,6 @@ plt.title('Traning and Validation Loss\nAMP Dataset', fontsize=17) #TODO
 # Guardar la figura en formato PNG con dpi 216
 plt.savefig('results/lose_curve.png', dpi=216)
 plt.show()
-
-
 
 #Testing:
 weights_file = "best_model_weights.pth"
@@ -191,7 +195,7 @@ specificity_train = true_negatives_train / (true_negatives_train + false_positiv
 f1_score_train = 2 * (precision_train * recall_train) / (precision_train + recall_train)
 
 # Imprimir las métricas
-print('///Evaluation Metrics - Trainning///\n') 
+print('/// Evaluation Metrics - Trainning ///\n') 
 print(f"Accuracy: {accuracy_train:.3f}")
 print(f"Precision: {precision_train:.3f}")
 print(f"Recall: {recall_train:.3f}")
@@ -212,6 +216,7 @@ plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
 plt.title('Receiver Operating Characteristic (ROC) Curve - Trainning Set')
 plt.legend(loc='lower right')
+plt.savefig('results/ROC_train.png', dpi=216)
 plt.show()
 
 #-------------------------------------------- ////////// Validation Set //////////-------------------------------------------------
@@ -264,7 +269,7 @@ specificity_val = true_negatives_validation / (true_negatives_validation + false
 f1_score_val = 2 * (precision_val * recall_val) / (precision_val + recall_val)
 
 # Imprimir las métricas
-print('///Evaluation Metrics - Validation///\n') 
+print('/// Evaluation Metrics - Validation ///\n') 
 print(f"Accuracy: {accuracy_val:.3f}")
 print(f"Precision: {precision_val:.3f}")
 print(f"Recall: {recall_val:.3f}")
@@ -285,6 +290,7 @@ plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
 plt.title('Receiver Operating Characteristic (ROC) Curve - Validation Set')
 plt.legend(loc='lower right')
+plt.savefig('results/ROC_validation.png', dpi=216)
 plt.show()
 
 # --------------------------------------------////////// Test Set //////////---------------------------------------------------
@@ -339,7 +345,7 @@ specificity_test = true_negatives_test / (true_negatives_test + false_positives_
 f1_score_test = 2 * (precision_test * recall_test) / (precision_test + recall_test)
 
 # Imprimir las métricas
-print('///Evaluation Metrics - Test///\n') 
+print('/// Evaluation Metrics - Test ///\n') 
 print(f"Accuracy: {accuracy_test:.3f}")
 print(f"Precision: {precision_test:.3f}")
 print(f"Recall: {recall_test:.3f}")
@@ -360,6 +366,7 @@ plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
 plt.title('Receiver Operating Characteristic (ROC) Curve - Test Set')
 plt.legend(loc='lower right')
+plt.savefig('results/ROC_test.png', dpi=216)
 plt.show()
 
 
