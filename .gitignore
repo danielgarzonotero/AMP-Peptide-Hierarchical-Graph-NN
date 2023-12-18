@@ -2,3 +2,4 @@
 data/dictionaries/*.pt
 data/processed/*.pt
 best_model_weights.pth
+src/__pycache__/*.pyc
