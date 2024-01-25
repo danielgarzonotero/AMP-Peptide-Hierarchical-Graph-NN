@@ -108,7 +108,6 @@ class GCN_Geo(torch.nn.Module):
         p = F.relu(p)
         
         p = self.linear4(p)
-        #p = self.sigmoid(p)
 
         return p.view(-1,)
 

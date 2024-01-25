@@ -129,22 +129,22 @@ from pandas.plotting import table
 # Lista de los 20 aminoácidos
 aminoacidos = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
 # ------------------------------AMP Dataset------------------------------
-df_amp = pd.read_csv('AMP_analisis.csv')
+df_amp = pd.read_csv('nonAMP_analisis13.csv')
 
 # Crear columnas para cada aminoácido y contar su frecuencia en cada secuencia
 for aa in aminoacidos:
-    df_amp[aa] = df_amp['sequence'].apply(lambda x: x.count(aa))/df_amp['sequence'].apply(len)
+    df_amp[aa] = df_amp['sequence'].apply(lambda x: x.count(aa))/(df_amp['sequence'].apply(len))
 
-df_amp.to_csv('AMP_analisis2.csv', sep=',', index=False)
+df_amp.to_csv('new_nonAMP_analisis13.csv', sep=',', index=False)
 
 # ------------------------------NOnAMP Dataset------------------------------
-df_namp = pd.read_csv('nonAMP_analisis.csv')
+''' df_namp = pd.read_csv('nonAMP_analisis.csv')
 
 # Crear columnas para cada aminoácido y contar su frecuencia en cada secuencia
 for aa in aminoacidos:
     df_namp[aa] = df_namp['sequence'].apply(lambda x: x.count(aa))/df_amp['sequence'].apply(len)
 
-df_namp.to_csv('nonAMP_analisis2.csv', sep=',', index=False)
+df_namp.to_csv('nonAMP_analisis2.csv', sep=',', index=False) '''
 
 #----------------------------Distributions-------------------------------------
 
@@ -180,12 +180,12 @@ def plot_aminoacid_distribution(df, dataset_name, aminoacidos, color):
     plt.show()
 
 # AMP Dataset
-print('////////// Aminoacid Frecuecy in the sequences - Length Included /////////')
+''' print('////////// Aminoacid Frecuecy in the sequences - Length Included /////////')
 df_amp = pd.read_csv('AMP_analisis2.csv')
-plot_aminoacid_distribution(df_amp, 'AMP', aminoacidos, 'g')
+plot_aminoacid_distribution(df_amp, 'AMP', aminoacidos, 'g') '''
 
 # Non-AMP Dataset
-df_nonamp = pd.read_csv('nonAMP_analisis2.csv')
+df_nonamp = pd.read_csv('new_nonAMP_analisis13.csv')
 plot_aminoacid_distribution(df_nonamp, 'Non-AMP', aminoacidos, 'firebrick')
 
 
@@ -197,15 +197,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ------------------------ AMP Dataset-------------------------------------------
-df_amp = pd.read_csv('AMP_analisis2.csv')
+df_amp = pd.read_csv('AMP_analisis13.csv')
 
 # Add a column with the length of each sequence
-df_amp['net_charge@pH_7'] = df_amp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(2))
+df_amp['net_charge@pH_7'] = df_amp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
 
 # Calculate mean and standard deviation
 mean_amp = df_amp['net_charge@pH_7'].mean()
 std_amp = df_amp['net_charge@pH_7'].std()
-df_amp.to_csv('AMP_analisis3.csv', sep=',', index=False)
+df_amp.to_csv('AMP_analisis13.csv', sep=',', index=False)
 
 # Histogram of sequence lengths
 values_amp, edges_amp, _ = plt.hist(df_amp['net_charge@pH_7'], bins=100, color="g") 
@@ -221,15 +221,15 @@ plt.text(0.95, 0.85, f"Mean: {mean_amp:.2f}\nStd: {std_amp:.2f}",
 plt.show()
 
 # ------------------------------Non-AMP Dataset------------------------------
-df_nonamp = pd.read_csv('nonAMP_analisis2.csv')
+df_nonamp = pd.read_csv('nonAMP_analisis13.csv')
 
 # Add a column with the length of each sequence
-df_nonamp['net_charge@pH_7'] = df_nonamp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(2))
+df_nonamp['net_charge@pH_7'] = df_nonamp['sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
 
 # Calculate mean and standard deviation
 mean_nonamp = df_nonamp['net_charge@pH_7'].mean()
 std_nonamp = df_nonamp['net_charge@pH_7'].std()
-df_nonamp.to_csv('nonAMP_analisis3.csv', sep=',', index=False)
+df_nonamp.to_csv('nonAMP_analisis13.csv', sep=',', index=False)
 
 # Histogram of sequence lengths
 values_nonamp, edges_nonamp, _ = plt.hist(df_nonamp['net_charge@pH_7'], bins=100, color="firebrick") 
@@ -247,8 +247,8 @@ plt.show()
 #%%//////////////// Concentrations of amino acids possess a charge at neutral pH ///////////////////////////
 import pandas as pd
 
-df_amp = pd.read_csv('AMP_analisis2.csv')
-df_nonamp = pd.read_csv('nonAMP_analisis2.csv')
+df_amp = pd.read_csv('AMP_analisis13.csv')
+df_nonamp = pd.read_csv('new_nonAMP_analisis13.csv')
 aminoacidos = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
 
 # ------------------------------Print and Save Average Concentrations------------------------------
@@ -289,10 +289,10 @@ from sklearn.metrics import r2_score
 from scipy.stats import pearsonr
 
 # Especificar el aminoacido
-aminoacido = 'R'
+aminoacido = 'E'
 
 # ------------------AMP Dataset---------------------
-df_amp = pd.read_csv('AMP_analisis3.csv')
+df_amp = pd.read_csv('AMP_analisis13.csv')
 
 r2 = r2_score(df_amp[aminoacido], df_amp['net_charge@pH_7'])
 r, _ = pearsonr(df_amp[aminoacido], df_amp['net_charge@pH_7'])
@@ -313,7 +313,7 @@ plt.legend([legend_text], loc="lower right")
 plt.show()
 
 # ------------------nonAMP Dataset---------------------
-df_amp = pd.read_csv('nonAMP_analisis3.csv')
+df_amp = pd.read_csv('nonAMP_analisis13.csv')
 r2 = r2_score(df_amp[aminoacido], df_amp['net_charge@pH_7'])
 r, _ = pearsonr(df_amp[aminoacido], df_amp['net_charge@pH_7'])
 

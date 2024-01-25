@@ -75,6 +75,14 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
     return geo_dp, aminoacids_features, blosum62, peptide_features, sequence 
 
 
+''' def label_representation(y, device):
+    if y >= 18.289912735: #This value is the mean of the RT from the SCX dataset
+        return torch.tensor(np.array([1]), dtype=torch.long, device=device)
+    elif y < 18.289912735:
+        return torch.tensor(np.array([0]), dtype=torch.long, device=device)
+    else:
+        raise ValueError("Invalid value for y. It should be a numeric value.")
+ '''
 
 def label_representation(y, device):
     if y == 1:
@@ -84,9 +92,13 @@ def label_representation(y, device):
         return torch.tensor(np.array([0]), dtype=torch.long, device=device)
     else:
         raise ValueError("Invalid value for y. It should be either 0 or 1.")
-    
 
-#Atomic Features
+    
+    
+    
+#/////////////////// Atomic Features //////////////////////////////////////
+
+#Creating the dictionaries based on the dataset information
 
 #Convert to Helm notation to use Rdkit
 def peptide_to_helm(peptide, polymer_id):
@@ -99,10 +111,6 @@ def peptide_to_helm(peptide, polymer_id):
     sequence_helm = f"{polymer_id}{{{sequence_helm}}}$$$$"
     
     return sequence_helm
-
-
-    
-#Creating the dictionaries based on the dataset information
 
 def get_features(sequence_list):
     
@@ -350,7 +358,6 @@ def get_non_peptide_idx(molecule):
     return  edges_nonpeptidic
 
 
-    
 #Getting the label of the atoms based on the aminoacids e.g: ABC --> [1,1,1,2,2,2,2,2,3,3,3,3,3,3,3]
 def get_label_aminoacid_atoms(edges_peptidic, edges_nonpeptidic, molecule):
     
@@ -437,7 +444,6 @@ def get_sequence(peptide):
     
     return sequence
 
-
 def construir_matriz_caracteristicas(sequence):
     secuencia = get_sequence(sequence)
     blosum62 = substitution_matrices.load("BLOSUM62")
@@ -452,19 +458,5 @@ def construir_matriz_caracteristicas(sequence):
             matriz_caracteristicas[j, i] = puntuacion
 
     return matriz_caracteristicas.T
-
-
-""" secuencias = ["ARND", "GATAAHACYPWA", "GAA"]
-
-matrices_caracteristicas = []
-
-for secuencia in secuencias:
-    matriz_caracteristicas = construir_matriz_caracteristicas(secuencia)
-    matrices_caracteristicas.append(matriz_caracteristicas)
-
-# Transponer la matriz de la tercera secuencia
-matriz_transpuesta = matrices_caracteristicas[0]
-print(matriz_transpuesta)
-print(matriz_transpuesta.shape) """
 
 # %%

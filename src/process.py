@@ -35,7 +35,7 @@ def train(model, device, dataloader, optim, epoch):
     loss_collect /= len(dataloader.dataset)
     
     print(
-        "Epoch:{}   Training dataset:   Loss per Datapoint: {:.3f}%".format(
+        "Epoch:{}   Training dataset:   Loss per Datapoint: {:.7f}%".format(
             epoch, loss_collect * 100
         )
     ) 
@@ -57,7 +57,6 @@ def validation(model, device, dataloader, epoch):
             # Make a prediction:
             pred = model(batch)
             
-
             # Calculate the loss:
             loss = loss_func(pred.double(), batch.y.double())  
 
@@ -68,7 +67,7 @@ def validation(model, device, dataloader, epoch):
     
     # Print out our test loss so we know how things are going
     print(
-        "Epoch:{}   Validation dataset: Loss per Datapoint: {:.3f}%".format(
+        "Epoch:{}   Validation dataset: Loss per Datapoint: {:.7f}%".format(
             epoch, loss_collect * 100
         )
     )  
