@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
 from torch_geometric.loader import DataLoader
+from torch_geometric.explain import CaptumExplainer
+
 import pandas as pd
 from src.device import device_info
 from src.data import GeoDataset
@@ -13,6 +15,10 @@ from src.process import train, validation, predict_test
 from math import sqrt
 from torchmetrics.classification import BinaryConfusionMatrix
 from sklearn.metrics import roc_curve, auc
+
+''' print("PyTorch version:", torch.__version__)
+print("PyTorch Geometric version:", torch_geometric.__version__) '''
+
 
 
 device_information = device_info()
@@ -91,13 +97,18 @@ model = GCN_Geo(
                 hidden_dim_fcn_3,
             ).to(device)
 
+''' # Especifica la ruta del archivo donde se guardaron los pesos del modelo previamente
+weights_path = 'SCX_best_model_weights.pth'
+
+# Carga los pesos en tu modelo
+model.load_state_dict(torch.load(weights_path)) '''
 
 # Set up optimizer:
-learning_rate = 1E-2
+learning_rate = 1E-3
 weight_decay = 1E-5 #TODO
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 # Definir el scheduler ReduceLROnPlateau
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, verbose= True, mode='min', patience=7, factor=0.1)
+#scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, verbose= True, mode='min', patience=20, factor=0.1)
 
 
 train_losses = []
@@ -106,7 +117,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 50
+number_of_epochs = 100
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch)
@@ -116,7 +127,7 @@ for epoch in range(1, number_of_epochs+1):
     val_losses.append(val_loss)
 
     # Programar la tasa de aprendizaje basada en la pérdida de validación
-    scheduler.step(val_loss)
+    #scheduler.step(val_loss)
     
     if val_loss < best_val_loss:
         best_val_loss = val_loss
@@ -125,8 +136,14 @@ for epoch in range(1, number_of_epochs+1):
 finish_time_training = time.time()
 time_training = (finish_time_training - start_time_training) / 60
 
+#-------------------------------------///////// Shapley Values Sampling ////// -------------------------------------------
+''' 
+cc, x, y, edge_index,  edge_attr, monomer_labels = dataset.cc, dataset.x, dataset.y, dataset.edge_index, dataset.edge_attr, dataset.monomer_labels
+explainer = CaptumExplainer(attribution_method='ShapleyValueSampling')
+explanation = explainer.forward(model, x, edge_index, target=y)
+ '''
 
-#Lose curves
+#---------------------------------------//////// Losse curves ///////// ---------------------------------------------------------
 plt.plot(train_losses, label='Training loss', color='darkorange') 
 plt.plot(val_losses, label='Validation loss', color='seagreen')  
 
@@ -215,7 +232,7 @@ plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess
 plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
 plt.title('Receiver Operating Characteristic (ROC) Curve - Trainning Set')
-plt.legend(loc='lower right')
+plt.legend(loc='lower right', fontsize=16)
 plt.savefig('results/ROC_train.png', dpi=216)
 plt.show()
 
@@ -289,7 +306,7 @@ plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess
 plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
 plt.title('Receiver Operating Characteristic (ROC) Curve - Validation Set')
-plt.legend(loc='lower right')
+plt.legend(loc='lower right', fontsize=16)
 plt.savefig('results/ROC_validation.png', dpi=216)
 plt.show()
 
@@ -365,7 +382,7 @@ plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess
 plt.xlabel('False Positive Rate (FPR)')
 plt.ylabel('True Positive Rate (TPR)')
 plt.title('Receiver Operating Characteristic (ROC) Curve - Test Set')
-plt.legend(loc='lower right')
+plt.legend(loc='lower right', fontsize=16)
 plt.savefig('results/ROC_test.png', dpi=216)
 plt.show()
 
