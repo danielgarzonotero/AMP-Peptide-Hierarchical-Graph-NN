@@ -1,9 +1,8 @@
 #%%
 from distribution import distribution, filter_and_save
 
-print(distribution(0, 
-                   '/home/vvd9fd/Documents/Bilodeau Group/Codes/0.Research/AMP-Peptide-Hierarchical-Graph-NN/data/Jing_Chia_without_duplicados.csv',
-                   'nonamp'))
+print(distribution(2, 
+                   '/home/vvd9fd/Documents/Bilodeau Group/Codes/0.Research/AMP-Peptide-Hierarchical-Graph-NN/data/datasets/1b_Xiao_training.csv'))
 
 
     # 0 : aa average concentration

@@ -4,22 +4,47 @@ import torch.nn.functional as F
 import numpy as np
 
 
-
-
-def train(model, device, dataloader, optim, epoch):
+def train(model, device, dataloader, optim, epoch, type_dataset):
     model.train()
     
-    loss_func = torch.nn.BCEWithLogitsLoss() #TODO
+    loss_func = torch.nn.BCEWithLogitsLoss() 
     loss_collect = 0
-
+    
+    if  type_dataset== 'training':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+    elif type_dataset == 'validation':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+    elif type_dataset == 'testing':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+    else:
+        raise ValueError(f"Unsupported dataset: {type_dataset}")
+    
     # Looping over the dataloader allows us to pull out input/output data:
     for batch in dataloader:
         # Zero out the optimizer:        
         optim.zero_grad()
         batch = batch.to(device)
-
+        
+        x, edge_index,  edge_attr, idx_batch, cc, monomer_labels, num_graphs, amino = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels, batch.num_graphs, batch.aminoacids_features
+        
         # Make a prediction:
-        pred = model(batch)
+        pred = model(
+                    x,
+                    edge_index,
+                    edge_attr,
+                    aminoacids_features_dict,
+                    blosum62_dict,
+                    idx_batch,
+                    cc,
+                    monomer_labels,
+                    num_graphs,
+                    amino
+        )
+        
+        pred = pred.view(-1,)
         
         # Calculate the loss:
         loss = loss_func(pred.double(), batch.y.double())
@@ -41,21 +66,46 @@ def train(model, device, dataloader, optim, epoch):
     ) 
     return loss_collect    
 
-def validation(model, device, dataloader, epoch):
+def validation(model, device, dataloader, epoch, type_dataset):
 
     model.eval()
     loss_collect = 0
     loss_func = torch.nn.BCEWithLogitsLoss() 
-        
+    
+    if  type_dataset== 'training':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+    elif type_dataset == 'validation':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+    elif type_dataset == 'testing':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+    else:
+        raise ValueError(f"Unsupported dataset: {type_dataset}")
+    
     # Remove gradients:
     with torch.no_grad():
 
         for batch in dataloader:
             
             batch = batch.to(device)
-    
+            x, edge_index,  edge_attr, idx_batch, cc, monomer_labels, num_graphs, amino = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels, batch.num_graphs, batch.aminoacids_features
+            
             # Make a prediction:
-            pred = model(batch)
+            pred = model(
+                        x,
+                        edge_index,
+                        edge_attr,
+                        aminoacids_features_dict,
+                        blosum62_dict,
+                        idx_batch,
+                        cc,
+                        monomer_labels,
+                        num_graphs,
+                        amino
+            )
+            pred = pred.view(-1,)
             
             # Calculate the loss:
             loss = loss_func(pred.double(), batch.y.double())  
@@ -67,7 +117,7 @@ def validation(model, device, dataloader, epoch):
     
     # Print out our test loss so we know how things are going
     print(
-        "Epoch:{}   Validation dataset: Loss per Datapoint: {:.7f}%".format(
+        "Epoch:{}   Validation dataset: Loss per Datapoint: {:.4f}%".format(
             epoch, loss_collect * 100
         )
     )  
@@ -76,9 +126,23 @@ def validation(model, device, dataloader, epoch):
     return loss_collect
 
 
-def predict_test(model, dataloader, device, weights_file, threshold):
+def predict_test(model, dataloader, device, weights_file, threshold, type_dataset):
     
-    diccionario = torch.load('data/dictionaries/sequences_dict.pt')
+    
+    if  type_dataset== 'training':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+        id_secuencias = importar_dicionario(type_dataset, 'sequences')
+    elif type_dataset == 'validation':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+        id_secuencias = importar_dicionario(type_dataset, 'sequences')
+    elif type_dataset == 'testing':
+        aminoacids_features_dict = importar_dicionario(type_dataset, 'aminoacids_features')
+        blosum62_dict = importar_dicionario(type_dataset, 'blosum62')
+        id_secuencias = importar_dicionario(type_dataset, 'sequences')
+    else:
+        raise ValueError(f"Unsupported dataset: {type_dataset}")
     
     model.eval()
     model.load_state_dict(torch.load(weights_file))
@@ -94,12 +158,28 @@ def predict_test(model, dataloader, device, weights_file, threshold):
 
         # Looping over the dataloader allows us to pull out input/output data:
         for batch in dataloader:
-            # Make a prediction:
-            pred = model(batch.to(device))
-            #to be able to round and saving in a csv file as prediction results
-            pred_sigmoid = torch.sigmoid(pred)
             
-            x_all.extend([diccionario[cci.item()] for cci in batch.cc])
+            batch = batch.to(device)
+            x, edge_index,  edge_attr, idx_batch, cc, monomer_labels, num_graphs, amino = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels, batch.num_graphs, batch.aminoacids_features
+            
+            # Make a prediction:
+            pred = model(
+                        x,
+                        edge_index,
+                        edge_attr,
+                        aminoacids_features_dict,
+                        blosum62_dict,
+                        idx_batch,
+                        cc,
+                        monomer_labels,
+                        num_graphs,
+                        amino
+            )
+            
+            pred = pred.view(-1,)
+            pred_sigmoid = torch.sigmoid(pred) #to be able to round and saving in a csv file as prediction results
+            
+            x_all.extend([id_secuencias[cci.item()] for cci in batch.cc])
             y_all.append(batch.y.double())
             pred_all.append(pred)
             
@@ -121,5 +201,8 @@ def predict_test(model, dataloader, device, weights_file, threshold):
 def custom_round(pred, threshold):
     return 1 if pred >= threshold else 0
 
+
+def importar_dicionario(type_dataset, type_dictionario):
+    return torch.load('data/dictionaries/{}/{}_dict.pt'.format(type_dataset, type_dictionario))
 
 

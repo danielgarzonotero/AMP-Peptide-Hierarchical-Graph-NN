@@ -6,16 +6,9 @@ import torch.nn.functional as F
 from torch_geometric.nn import NNConv, ARMAConv
 from torch_geometric.nn import aggr
 from torch_scatter import scatter
-from src.data import GeoDataset
+from src.data import GeoDataset_1
 from src.device import device_info
 import os
-
-dataset = GeoDataset(root='data')
-
-# using the relative paths
-aminoacids_features_dict = torch.load('data/dictionaries/aminoacids_features_dict.pt')
-blosum62_dict = torch.load('data/dictionaries/blosum62_dict.pt')
-peptides_features_dict = torch.load('data/dictionaries/peptides_features_dict.pt')
 
 #Hierarchical Graph Neural Network
 class GCN_Geo(torch.nn.Module):
@@ -24,75 +17,88 @@ class GCN_Geo(torch.nn.Module):
                 edge_dim_feature,
                 hidden_dim_nn_1,
                 hidden_dim_nn_2,
-                hidden_dim_nn_3,
 
                 hidden_dim_gat_0,
                 
                 hidden_dim_fcn_1,
                 hidden_dim_fcn_2,
-                hidden_dim_fcn_3):
+                hidden_dim_fcn_3,
+                dropout=0.3):
         super(GCN_Geo, self).__init__()
 
         self.nn_conv_1 = NNConv(initial_dim_gcn, hidden_dim_nn_1,
-                               nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, initial_dim_gcn * hidden_dim_nn_1)), 
-                               aggr='add' )
+                                nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, initial_dim_gcn * hidden_dim_nn_1)), 
+                                aggr='add' )
         
         self.nn_conv_2 = NNConv(hidden_dim_nn_1, hidden_dim_nn_2,
-                              nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, hidden_dim_nn_1 * hidden_dim_nn_2)), 
-                               aggr='add')
+                                nn=torch.nn.Sequential(torch.nn.Linear(edge_dim_feature, hidden_dim_nn_1 * hidden_dim_nn_2)), 
+                                aggr='add')
         
-        
-        #The 7 and 24 comes from the four amino acid features and blosum62 matrix that were concatenated, 
-        self.nn_gat_0 = ARMAConv(hidden_dim_nn_2+7+24, hidden_dim_gat_0, num_stacks = 3, dropout=0.1, num_layers=7, shared_weights = False ) #TODO
+        #The 7 and 24 comes from the four amino acid features and blosum62 matrix that were concatenated,  95+24
+        self.nn_gat_0 = ARMAConv(hidden_dim_nn_2+95, hidden_dim_gat_0, num_stacks = 3, dropout=0.1, num_layers=10, shared_weights = False ) 
         self.readout = aggr.SumAggregation()
         
-        #The 7 comes from the four peptides features that were concatenated
-        self.linear1 = nn.Linear(hidden_dim_gat_0+7, hidden_dim_fcn_1)
+        #The 7 comes from the four peptides features that were concatenated, +7
+        self.linear1 = nn.Linear(hidden_dim_gat_0, hidden_dim_fcn_1)
         self.linear2 = nn.Linear(hidden_dim_fcn_1, hidden_dim_fcn_2 )
         self.linear3 = nn.Linear(hidden_dim_fcn_2, hidden_dim_fcn_3) 
-        self.linear4 = nn.Linear(hidden_dim_fcn_3, 1) #TODO 
-        self.sigmoid = nn.Sigmoid()
+        self.linear4 = nn.Linear(hidden_dim_fcn_3, 1)
         
-        # self.sigmoid = nn.Sigmoid()
+        self.dropout = nn.Dropout(dropout)
         
-    def forward(self, data):
-        cc, x, edge_index,  edge_attr, monomer_labels = data.cc, data.x, data.edge_index, data.edge_attr, data.monomer_labels
-
+        
+    def forward(self,
+                x,
+                edge_index,
+                edge_attr,
+                aminoacids_features_dict,
+                blosum62_dict,
+                idx_batch,
+                cc,
+                monomer_labels,
+                num_graphs,
+                amino): #TODO REVISAR COMO SE GUARDA MONOMER LABEL, Y GUARDAR ASI AMINOACID FEATURES Y SI QUIZAS ASI FUNCIONA LA MASK
+        
+        x = self.dropout(x)
         x = self.nn_conv_1(x, edge_index, edge_attr)
         x = F.relu(x)
         
+        x = self.dropout(x)
         x = self.nn_conv_2(x, edge_index, edge_attr)
         x = F.relu(x)
         
         results_list = []
         
-        for i in range(data.num_graphs):
-            xi = x[data.batch == i]
-            monomer_labels_i = monomer_labels[data.batch == i]
+        for i in range(num_graphs):  # Looping over the length of x
+            
+            mask = idx_batch == i
+            
+            xi = x[mask]
+            monomer_labels_i = monomer_labels[mask]
             cc_i = cc[i].item()
+            
+            #TODO Intentar remover los diccionarios usando mask
+            #monomer_labels_2 = monomer_labels[data.batch == i]
+            #xi_2 = x[data.batch == i]
             
             num_aminoacid = torch.max(monomer_labels_i).item()
             amino_index_i = get_amino_indices(num_aminoacid)
 
-            #getting amino acids representation from atom features
+            # getting amino acids representation from atom features
             xi = scatter(xi, monomer_labels_i, dim=0, reduce="sum")
             
-            #adding amino acids features
+            # adding amino acids features
             aminoacids_features_i = aminoacids_features_dict[cc_i]
-            blosum62_i = blosum62_dict[cc_i]
             
-            xi = torch.cat((xi, aminoacids_features_i, blosum62_i), dim=1) #TODO
+            xi = torch.cat((xi, aminoacids_features_i), dim=1)
+            #xi = torch.cat((xi, aminoacids_features_i, blosum62_i), dim=1)
             
-            #Graph convolution amino acid level
+            # Graph convolution amino acid level
             xi = self.nn_gat_0(xi, amino_index_i) 
             xi = F.relu(xi)
             
-            #Readout for peptide representation
+            # Readout for peptide representation
             xi = self.readout(xi)
-            
-            #adding peptides features
-            peptides_features_i = peptides_features_dict[cc_i]
-            xi = torch.cat((xi, peptides_features_i), dim=1)
             
             results_list.append(xi)
             
@@ -108,8 +114,10 @@ class GCN_Geo(torch.nn.Module):
         p = F.relu(p)
         
         p = self.linear4(p)
-
-        return p.view(-1,)
+        
+        p = torch.transpose(p, 0, 1)
+        
+        return p
 
 
 device_info_instance = device_info()

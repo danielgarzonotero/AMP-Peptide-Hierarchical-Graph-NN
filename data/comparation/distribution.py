@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+#//////////// Filtering Datasets ///////////////////
 def filter_and_save(path_dataset, condition, output_csv):
     df = pd.read_csv(path_dataset)
 
@@ -32,23 +33,7 @@ def filter_and_save(path_dataset, condition, output_csv):
     filtered_df.to_csv(output_csv, index=False)
 
 # Example usage:
-filter_and_save('multiAMP_test.csv', 'all_amp', 'filtered_data_all_amp_test.csv')
-
-#%%
-#///// Union of datasets //////
-
-import pandas as pd
-
-df_train = pd.read_csv('filtered_data_all_amp_train.csv')
-df_test = pd.read_csv('filtered_data_all_amp_test.csv')
-
-df_combined = pd.concat([df_train, df_test], axis=0, ignore_index=True)
-
-# Imprimir el nuevo DataFrame combinado
-print(df_combined)
-
-# Guardar el DataFrame combinado en un nuevo archivo CSV si es necesario
-df_combined.to_csv('train_test_combined_dataset.csv', index=False)
+filter_and_save('multiAMP_test.csv', 'all_nonamp', 'Ching_nonAMP_test.csv')
 
 
 # %%
@@ -57,9 +42,10 @@ from rdkit.Chem import rdMolDescriptors
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import numpy as np
 
-def distribution(property, path_dataset, condition):
+def distribution(property, path):
     # 0 : aa average concentration
     # 1: Length             # 2: Charge              # 3: Amphiphilicity           
     # 4: Hydropathy         # 5: Secondary Structure # 6: FAI
@@ -67,42 +53,54 @@ def distribution(property, path_dataset, condition):
     # 10: Isoelectric Point # 11: Instability Index  
     
     #Filtering the result excel depending the condition
-    df_new = pd.read_csv(path_dataset).copy()
+    df_new = pd.read_csv(path).copy()
+    
+    condition_filter_amp = ((df_new['Activity'] == 1) )
+    condition_filter_nonamp = ((df_new['Activity'] == 0) )
 
-    if condition == 'amp':
-        condition_filter = ((df_new['Activity'] == 1) )
-    elif condition == 'nonamp':
-        condition_filter = ((df_new['Activity'] == 0) )
+    df_new_amp = df_new[condition_filter_amp].copy()
+    df_new_nonamp = df_new[condition_filter_nonamp].copy()
 
-
-    df_new = df_new[condition_filter].copy()
     
     if property == 0:
         
         aminoacidos = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
         for aa in aminoacidos:
-            df_new[aa] = df_new['Sequence'].apply(lambda x: x.count(aa) / len(x))
-
-        avg_concentrations = df_new[aminoacidos].mean().sort_values(ascending=False)
-        avg_df = pd.DataFrame({'Amino Acid': avg_concentrations.index,
-                               'AMP Average Concentration': avg_concentrations.round(4)})
-        avg_df.to_csv('average_concentrations.csv', index=False)
+            df_new_amp[aa] = df_new_amp['Sequence'].apply(lambda x: x.count(aa) / len(x))
+            df_new_nonamp[aa] = df_new_amp['Sequence'].apply(lambda x: x.count(aa) / len(x))
+            
+        avg_concentrations_amp = df_new_amp[aminoacidos].mean().sort_values(ascending=False)
+        avg_concentrations_nonamp = df_new_nonamp[aminoacidos].mean().sort_values(ascending=False)
+        
+        avg_amp_df = pd.DataFrame({'Amino Acid': avg_concentrations_amp.index,
+                               'AMP Average Concentration': avg_concentrations_amp.round(4)})
+        avg_nonamp_df = pd.DataFrame({'Amino Acid': avg_concentrations_nonamp.index,
+                               'AMP Average Concentration': avg_concentrations_nonamp.round(4)})
+        
+        avg_amp_df.to_csv('amp_average_concentrations.csv', index=False)
+        avg_nonamp_df.to_csv('nonamp_average_concentrations.csv', index=False)
         pass
     
     elif property == 1:
         property = 'Length'
-        df_new[property] = df_new['Sequence'].apply(len)
+        df_new_amp[property] = df_new_amp['Sequence'].apply(len)
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(len)
         # Calculate mean and standard deviation
-        mean = df_new[property].mean()
-        std = df_new[property].std()
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()
         pass
         
     elif property == 2:
         property = 'Charge'
-        df_new[property] = df_new['Sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
+        df_new_amp[property] = df_new_amp['Sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(lambda x: ProteinAnalysis(x).charge_at_pH(7))
         # Calculate mean and standard deviation
-        mean = df_new[property].mean()
-        std = df_new[property].std()
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()
         pass
     
     elif property == 3:
@@ -115,9 +113,12 @@ def distribution(property, path_dataset, condition):
             return sum(df_valores.loc[df_valores['Letter'].isin(list(secuencia)), 'Amphiphilicity'])
         
         # Agregar una nueva columna al DataFrame de secuencias con las sumas calculadas
-        df_new[property] = df_new['Sequence'].apply(calcular_suma)
-        mean = df_new[property].mean()
-        std = df_new[property].std()
+        df_new_amp[property] = df_new_amp['Sequence'].apply(calcular_suma)
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(calcular_suma)
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()
         pass
     
     elif property == 4:
@@ -127,9 +128,12 @@ def distribution(property, path_dataset, condition):
         def calcular_suma(secuencia):
             return sum(df_valores.loc[df_valores['Letter'].isin(list(secuencia)), 'Hydropathy'])
     
-        df_new[property] = df_new['Sequence'].apply(calcular_suma)
-        mean = df_new[property].mean()
-        std = df_new[property].std()
+        df_new_amp[property] = df_new_amp['Sequence'].apply(calcular_suma)
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(calcular_suma)
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()
         pass
     
     elif property == 5:
@@ -141,17 +145,27 @@ def distribution(property, path_dataset, condition):
             return sheet, turn, helix
         
         # Añadir columnas con la longitud y la estructura secundaria de cada secuencia
-        df_new['helix'] = df_new['Sequence'].apply(lambda x: predict_secondary_structure(x)[2])
-        df_new['turn'] = df_new['Sequence'].apply(lambda x: predict_secondary_structure(x)[1])
-        df_new['sheet'] = df_new['Sequence'].apply(lambda x: predict_secondary_structure(x)[0])
-
+        df_new_amp['helix'] = df_new_amp['Sequence'].apply(lambda x: predict_secondary_structure(x)[2])
+        df_new_amp['turn'] = df_new_amp['Sequence'].apply(lambda x: predict_secondary_structure(x)[1])
+        df_new_amp['sheet'] = df_new_amp['Sequence'].apply(lambda x: predict_secondary_structure(x)[0])
+        
+        df_new_nonamp['helix'] = df_new_nonamp['Sequence'].apply(lambda x: predict_secondary_structure(x)[2])
+        df_new_nonamp['turn'] = df_new_nonamp['Sequence'].apply(lambda x: predict_secondary_structure(x)[1])
+        df_new_nonamp['sheet'] = df_new_nonamp['Sequence'].apply(lambda x: predict_secondary_structure(x)[0])
         # Calcular medias y desviaciones estándar
-        helix_mean = df_new['helix'].mean()
-        helix_std = df_new['helix'].std()
-        turn_mean = df_new['turn'].mean()
-        turn_std = df_new['turn'].std()
-        sheet_mean = df_new['sheet'].mean()
-        sheet_std = df_new['sheet'].std()      
+        helix_mean_amp = df_new_amp['helix'].mean()
+        helix_std_amp = df_new_amp['helix'].std()
+        turn_mean_amp = df_new_amp['turn'].mean()
+        turn_std_amp = df_new_amp['turn'].std()
+        sheet_mean_amp = df_new_amp['sheet'].mean()
+        sheet_std_amp = df_new_amp['sheet'].std()
+        
+        helix_mean_nonamp = df_new_nonamp['helix'].mean()
+        helix_std_nonamp = df_new_nonamp['helix'].std()
+        turn_mean_nonamp = df_new_nonamp['turn'].mean()
+        turn_std_nonamp = df_new_nonamp['turn'].std()
+        sheet_mean_nonamp = df_new_nonamp['sheet'].mean()
+        sheet_std_nonamp = df_new_nonamp['sheet'].std()        
         pass
     
     elif property == 6:
@@ -180,10 +194,14 @@ def distribution(property, path_dataset, condition):
             sequence_helm = f"PEPTIDE{polymer_id}{{{sequence_helm}}}$$$$"
             return sequence_helm
         
-        df_new[property] = df_new['Sequence'].apply(lambda x: fai(x))
+        df_new_amp[property] = df_new_amp['Sequence'].apply(lambda x: fai(x))
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(lambda x: fai(x))
+        
         # Calcular medias y desviaciones estándar
-        mean= df_new[property].mean()
-        std= df_new[property].std()
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()
         pass
     
     elif property == 7:
@@ -194,10 +212,13 @@ def distribution(property, path_dataset, condition):
             mw_peptide = peptide_analysis .molecular_weight()
             return mw_peptide
         
-        df_new[property] = df_new['Sequence'].apply(lambda x: mw_peptide(x))
+        df_new_amp[property] = df_new_amp['Sequence'].apply(lambda x: mw_peptide(x))
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(lambda x: mw_peptide(x))
         # Calcular medias y desviaciones estándar
-        mean= df_new[property].mean()
-        std = df_new[property].std()
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()
         pass
     
     elif property == 8:
@@ -208,10 +229,13 @@ def distribution(property, path_dataset, condition):
             hidrophobicity = peptide_analysis.gravy()
             return hidrophobicity
         
-        df_new[property] = df_new['Sequence'].apply(lambda x: hidrophobicity(x))
+        df_new_amp[property] = df_new_amp['Sequence'].apply(lambda x: hidrophobicity(x))
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(lambda x: hidrophobicity(x))
         # Calcular medias y desviaciones estándar
-        mean= df_new[property].mean()
-        std = df_new[property].std()
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()
         pass
     
     elif property == 9:
@@ -221,10 +245,13 @@ def distribution(property, path_dataset, condition):
             aromaticity = peptide_analysis.aromaticity()
             return aromaticity
         
-        df_new[property] = df_new['Sequence'].apply(lambda x: aromaticity(x))
+        df_new_amp[property] = df_new_amp['Sequence'].apply(lambda x: aromaticity(x))
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(lambda x: aromaticity(x))
         # Calcular medias y desviaciones estándar
-        mean= df_new[property].mean()
-        std = df_new[property].std()       
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()     
         pass
     
     elif property == 10:
@@ -234,10 +261,13 @@ def distribution(property, path_dataset, condition):
             isoelectric_point = peptide_analysis.isoelectric_point()
             return isoelectric_point
         
-        df_new[property] = df_new['Sequence'].apply(lambda x: isoelectric_point(x))
+        df_new_amp[property] = df_new_amp['Sequence'].apply(lambda x: isoelectric_point(x))
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(lambda x: isoelectric_point(x))
         # Calcular medias y desviaciones estándar
-        mean= df_new[property].mean()
-        std = df_new[property].std()   
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()
         pass
     
     elif property == 11:
@@ -247,10 +277,13 @@ def distribution(property, path_dataset, condition):
             instability_index= peptide_analysis.instability_index()
             return instability_index
         
-        df_new[property] = df_new['Sequence'].apply(lambda x: instability_index(x))
+        df_new_amp[property] = df_new_amp['Sequence'].apply(lambda x: instability_index(x))
+        df_new_nonamp[property] = df_new_nonamp['Sequence'].apply(lambda x: instability_index(x))
         # Calcular medias y desviaciones estándar
-        mean= df_new[property].mean()
-        std = df_new[property].std()         
+        mean_amp = df_new_amp[property].mean()
+        std_amp = df_new_amp[property].std()
+        mean_nonamp = df_new_nonamp[property].mean()
+        std_nonamp = df_new_nonamp[property].std()       
         pass
         
     elif property == 12:
@@ -258,30 +291,46 @@ def distribution(property, path_dataset, condition):
         pass
 
     #Plottig
-    color = "green" if condition =='amp' else "red"
-    if condition =='amp':
-        clase = "Antimicrobial Peptides"
-    elif condition =='nonamp':
-        clase ="No Antimicrobial Peptides"
         
     
     if property != 0:
         if property == 'Secondary Structure':
-            plt.figure(figsize=(10, 6))
+            plt.figure(figsize=(10, 6), dpi=260)
 
-            plt.hist(df_new['helix'], bins=100, color="g", alpha=0.9, label="Helix") 
-            plt.hist(df_new['turn'], bins=100, color="b", alpha=0.5, label="Turn") 
-            plt.hist(df_new['sheet'], bins=100, color="r", alpha=0.2, label="Sheet") 
+            plt.hist(df_new_amp['sheet'], bins=10, color="yellowgreen", alpha=0.2, label="Sheet") 
+            plt.hist(df_new_amp['turn'], bins=10, color="slateblue", alpha=0.5, label="Turn") 
+            plt.hist(df_new_amp['helix'], bins=10, color="teal", alpha=0.9, label="Helix") 
 
             plt.xlabel('Secondary Structure Fraction ',size= 17)
             plt.ylabel('Frequency',size= 15)
-            plt.title(f"Distribution of {property} - {clase}",size= 17)
+            plt.title(f"Distribution of {property} - Antimicrobial Peptides",size= 17)
 
             # Agregar leyenda
             plt.legend(fontsize='20')
 
             # Añadir texto con medias y desviaciones estándar
-            plt.text(0.95, 0.055, f"Helix: Mean={helix_mean:.2f}, Std={helix_std:.2f}\nTurn: Mean={turn_mean:.2f}, Std={turn_std:.2f}\nSheet: Mean={sheet_mean:.2f}, Std={sheet_std:.2f}", 
+            plt.text(0.95, 0.055, f"Helix: Mean={helix_mean_amp:.2f}, Std={helix_std_amp:.2f}\nTurn: Mean={turn_mean_amp:.2f}, Std={turn_std_amp:.2f}\nSheet: Mean={sheet_mean_amp:.2f}, Std={sheet_std_amp:.2f}", 
+                    transform=plt.gca().transAxes, ha='right', color='black',
+                    bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+
+            plt.show()
+            
+            plt.figure(figsize=(10, 6))
+
+            plt.hist(df_new_nonamp['sheet'], bins=10, color="yellowgreen", alpha=0.2, label="Sheet") 
+            plt.hist(df_new_nonamp['turn'], bins=10, color="slateblue", alpha=0.5, label="Turn") 
+            plt.hist(df_new_nonamp['helix'], bins=10, color="teal", alpha=0.9, label="Helix") 
+
+
+            plt.xlabel('Secondary Structure Fraction ',size= 17)
+            plt.ylabel('Frequency',size= 15)
+            plt.title(f"Distribution of {property} - nonAntimicrobial Peptides",size= 17)
+
+            # Agregar leyenda
+            plt.legend(fontsize='20')
+
+            # Añadir texto con medias y desviaciones estándar
+            plt.text(0.95, 0.055, f"Helix: Mean={helix_mean_amp:.2f}, Std={helix_std_amp:.2f}\nTurn: Mean={turn_mean_amp:.2f}, Std={turn_std_amp:.2f}\nSheet: Mean={sheet_mean_amp:.2f}, Std={sheet_std_amp:.2f}", 
                     transform=plt.gca().transAxes, ha='right', color='black',
                     bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
 
@@ -289,21 +338,34 @@ def distribution(property, path_dataset, condition):
             
             
         else:
-            plt.figure(figsize=(10, 6))
-            plt.hist(df_new[property], bins=100, color=color, alpha=0.9) 
+            plt.figure(figsize=(10, 6), dpi=260)
+            plt.hist(df_new_nonamp[property], bins=10, color='tomato', alpha=0.9)
+            plt.hist(df_new_amp[property], bins=10, color='seagreen', alpha=0.3) 
+             
+            
+
             plt.xlabel(property, size= 17)
             plt.ylabel('Frequency',size= 17)
-            plt.title(f"Distribution of property {property} - {clase}",size= 17)
+            plt.xticks(fontsize=18)  # Set font size for x-axis tick labels
+            plt.yticks(fontsize=18)  # Set font size for y-axis tick labels 
+            plt.title(f"Distribution of {property}",size= 20)
 
             # Añadir texto con medias y desviaciones estándar
-            plt.text(0.95, 0.85, f"Mean={mean:.2f}\nStd={std:.2f}", 
-                    transform=plt.gca().transAxes, ha='right', color='black',
-                    bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 17)
+            #plt.text(0.95, 0.85, f"Mean AMP={mean_amp:.2f}\nMean nonAMP={mean_nonamp:.2f}", 
+            #        transform=plt.gca().transAxes, ha='right', color='black',
+            #        bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 17)
+            
+            legend_handles = [
+                mpatches.Patch(color='green', alpha=0.5, label='AMP'),
+                mpatches.Patch(color='red', alpha=0.5, label='nonAMP')
+            ]
+            plt.legend(handles=legend_handles, loc='upper left', fontsize=17)
+            
             plt.show()
 
 
 #How to use it
-#distribution(0, 'filtered_data_nonamp_validated.csv', 'amp')
+
 
 
 # %%

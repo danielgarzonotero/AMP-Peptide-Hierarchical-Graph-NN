@@ -13,7 +13,7 @@ from Bio.Align import substitution_matrices
 
 
 
-def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_dict, edge_ft_dict, device):
+def sequences_geodata(cc, sequence, y, aminoacids_ft_dict, node_ft_dict, edge_ft_dict, device):
     
     #Atoms
     polymer_id = "PEPTIDE1" 
@@ -25,10 +25,11 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
     num_bonds = [atom.GetDegree() for atom in molecule.GetAtoms()]
     bonded_hydrogens = [atom.GetTotalNumHs() for atom in molecule.GetAtoms()]
     hybridization = [atom.GetHybridization().real for atom in molecule.GetAtoms()]
+    implicit_valence = [atom.GetImplicitValence () for atom in molecule.GetAtoms()]
     
-    node_keys_features = [f"{atomic}_{aromatic}_{bonds}_{hydrogen}_{hybrid}" 
-                          for atomic, aromatic, bonds, hydrogen, hybrid 
-                          in zip(atomic_number, aromaticity, num_bonds, bonded_hydrogens, hybridization)]
+    node_keys_features = [f"{atomic}_{aromatic}_{bonds}_{hydrogen}_{hybrid}_{impli_vale}" 
+                          for atomic, aromatic, bonds, hydrogen, hybrid, impli_vale
+                          in zip(atomic_number, aromaticity, num_bonds, bonded_hydrogens, hybridization, implicit_valence )]
     
     edge_key_features = []
     for bond in molecule.GetBonds():
@@ -47,21 +48,31 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
     
     edges_peptidic = get_edge_indices(molecule)[1]
     edges_nonpeptidic = get_non_peptide_idx(molecule)
-    
-    
     labels_aminoacid_atoms = get_label_aminoacid_atoms(edges_peptidic, edges_nonpeptidic, molecule)
     
-    #Aminoacid:
+    #amino acid feature:
+    aminoacids_features_dict = aminoacids_ft_dict
     aminoacids =get_aminoacids(sequence)
-    aminoacids_features = torch.tensor(np.array([amino_ft_dict[amino] for amino in aminoacids]), dtype=torch.float32, device=device)
+    aminoacids_mol = [get_molecule(amino) for amino in aminoacids]
+    aminoacids_biopython = [ProteinAnalysis(amino) for amino in aminoacids]
+    wt_amino=[round(Descriptors.MolWt(amino), 4) for amino in aminoacids_mol]
+    aromaticity_amino=[round(amino.aromaticity(), 4) for amino in aminoacids_biopython]
+    hydrophobicity_amino=[round(amino.gravy(), 4) for amino in aminoacids_biopython]
+    net_charge_amino=[round(amino.charge_at_pH(7), 4) for amino in aminoacids_biopython]
+    p_iso_amino=[round(amino.isoelectric_point(), 4) for amino in aminoacids_biopython]
+    logp_amino=[round(Crippen.MolLogP(amino), 4) for amino in aminoacids_mol]
+    atoms_amino=[round(float(amino.GetNumAtoms()), 4) for amino in aminoacids_mol]
+
+    aminoacids_keys_features = [f"{wt}_{aromaticity}_{hydrophobicity}_{net_charge}_{p_iso}_{logp}_{atoms}"
+                                for wt, aromaticity, hydrophobicity, net_charge, p_iso, logp, atoms
+                                in zip(wt_amino, aromaticity_amino, hydrophobicity_amino, net_charge_amino, p_iso_amino, logp_amino, atoms_amino)]
+
     
+    aminoacids_features = torch.tensor(np.array([aminoacids_features_dict[x] for x in aminoacids_keys_features]), dtype=torch.float32, device = device)
+
     #BLOSUM62 feature matrix
     blosum62 = torch.tensor(np.array(construir_matriz_caracteristicas(sequence)), dtype =torch.float32, device = device)
-    
-    #Peptide:
-    sequence= get_sequence(sequence)
-    peptide_features = torch.tensor(np.array([peptide_ft_dict[sequence]]), dtype=torch.float32, device=device)
-    
+
     y = label_representation(y, device)
 
     geo_dp = Data(x=nodes_features,
@@ -69,12 +80,14 @@ def sequences_geodata(cc, sequence, y, peptide_ft_dict, amino_ft_dict, node_ft_d
                   edge_index=graph_edges, 
                   edge_attr=edges_features, 
                   monomer_labels=labels_aminoacid_atoms,
+                  aminoacids_features=aminoacids_features,
+                  blosumn=blosum62,
                   cc = cc,
                   )
     
-    return geo_dp, aminoacids_features, blosum62, peptide_features, sequence 
+    return geo_dp, aminoacids_features, blosum62, sequence 
 
-
+    
 ''' def label_representation(y, device):
     if y >= 18.289912735: #This value is the mean of the RT from the SCX dataset
         return torch.tensor(np.array([1]), dtype=torch.long, device=device)
@@ -114,90 +127,24 @@ def peptide_to_helm(peptide, polymer_id):
 
 def get_features(sequence_list):
     
-    peptide_features_dict = defaultdict(list)
     peptides_list_helm = []
-    aminoacid_list = []
     
     for i, peptide in enumerate(sequence_list):
         peptide = get_sequence(peptide)
-        peptide_biopython = ProteinAnalysis(peptide)
-        
-        #molecular weight
-        wt_peptide = peptide_biopython.molecular_weight()
-        #aromaticity
-        aromaticity_peptide = peptide_biopython.aromaticity()
-        #hidrophobicity
-        hydrophobicity_peptide = peptide_biopython.gravy()
-        #Calculate the charge of a protein at given pH (pH 7)
-        net_charge_peptide = peptide_biopython.charge_at_pH(7)
-        # isoelectric_point
-        p_iso_peptide = peptide_biopython.isoelectric_point()
-        #inextability
-        inextability_peptide = peptide_biopython.instability_index()
-        #length Peptide
-        length_peptide = peptide_biopython.length
-    
-        peptide_properties = [wt_peptide, 
-                            aromaticity_peptide,
-                            hydrophobicity_peptide,
-                            net_charge_peptide,
-                            p_iso_peptide,
-                            inextability_peptide,
-                            length_peptide]
-        
-        peptide_ft = np.array(peptide_properties)
-        peptide_features_dict[peptide] = peptide_ft
-        
         #To use Helm notation and RdKit for nodes and bonds features
         polymer_type = "PEPTIDE"  # Tipo de polímero (en este caso, PEPTIDE)
         polymer_id = f"{polymer_type}{i + 1}"
         simple_polymer_helm = peptide_to_helm(peptide, polymer_id)
         peptides_list_helm.append(simple_polymer_helm) #create the list of peptides in Helm notation
         
-        #To use for amino acids features
-        aminoacid_list.extend(get_aminoacids(peptide))
-        
-    aminoacid_set = list(set(aminoacid_list))
-    amino_features_dict = defaultdict(list)
-    
-    for amino in aminoacid_set:
-        amino_mol = get_molecule(amino)
-        amino_biopython = ProteinAnalysis(amino)
-        
-        #molecular weight:
-        wt_amino = Descriptors.MolWt(amino_mol)
-        #aromaticity Calculate the aromaticity according to Lobry, 1994:
-        aromaticity_amino = amino_biopython.aromaticity()
-        #Calculate the GRAVY (Grand Average of Hydropathy) according to Kyte and Doolitle, 1982.
-        hydrophobicity_amino = amino_biopython.gravy()
-        #Calculate the charge of a protein at given pH (pH 7)
-        net_charge_amino = amino_biopython.charge_at_pH(7)
-        # isoelectric_point
-        p_iso_amino = amino_biopython.isoelectric_point()
-        #coeficiente de partición octanol-agua. Un LogP más alto indica una molécula más hidrofóbica (menos polar), mientras que un LogP más bajo indica una molécula más hidrofílica (más polar).
-        logp_amino = Crippen.MolLogP(amino_mol)
-        #number of atoms
-        atoms_amino = float(amino_mol.GetNumAtoms())
-        
-        #all together
-        amino_properties = [wt_amino,
-                            aromaticity_amino,
-                            hydrophobicity_amino,
-                            net_charge_amino,
-                            p_iso_amino,
-                            logp_amino, 
-                            atoms_amino]
-        
-        amino_ft = np.array(amino_properties)
-        amino_features_dict[amino] = amino_ft
-        
-  
     #nodes
     atomic_number = []
     aromaticity = []
     num_bonds = []
     bonded_hydrogens = []
     hybridization = []
+    implicit_valence = []
+    
     
     #edges
     bond_type = []
@@ -215,6 +162,8 @@ def get_features(sequence_list):
         num_bonds.extend([atom.GetDegree() for atom in molecule.GetAtoms()])
         bonded_hydrogens.extend([atom.GetTotalNumHs() for atom in molecule.GetAtoms()])
         hybridization.extend([atom.GetHybridization().real for atom in molecule.GetAtoms()])
+        implicit_valence.extend([atom.GetImplicitValence () for atom in molecule.GetAtoms()])
+    
         
         for bond in molecule.GetBonds():
             bond_type.extend([bond.GetBondTypeAsDouble()])
@@ -223,66 +172,72 @@ def get_features(sequence_list):
             bond_aromatic.extend([int(bond.GetIsAromatic())])
             valence_contribution_i.extend([int(bond.GetValenceContrib(bond.GetBeginAtom()))])
             valence_contribution_f.extend([int(bond.GetValenceContrib(bond.GetEndAtom()))])
-            
+
     #nodes
-    atomic_set = list(set(atomic_number))
+    set_atomic = list(set(atomic_number))
     codificador_atomic = OneHotEncoder()
-    codificador_atomic.fit(np.array(atomic_set).reshape(-1,1))
+    codificador_atomic.fit(np.array(set_atomic).reshape(-1,1))
     
-    aromatic_set = list(set(aromaticity))
+    set_aromatic = list(set(aromaticity))
     codificador_aromatic = OneHotEncoder()
-    codificador_aromatic.fit(np.array(aromatic_set).reshape(-1,1))
+    codificador_aromatic.fit(np.array(set_aromatic).reshape(-1,1))
     
-    bonds_set = list(set(num_bonds))
+    set_bonds = list(set(num_bonds))
     codificador_bonds = OneHotEncoder()
-    codificador_bonds.fit(np.array(bonds_set).reshape(-1,1))
+    codificador_bonds.fit(np.array(set_bonds).reshape(-1,1))
     
-    hydrogen_set = list(set(bonded_hydrogens))
+    set_hydrogen = list(set(bonded_hydrogens))
     codificador_hydrogen = OneHotEncoder()
-    codificador_hydrogen.fit(np.array(hydrogen_set).reshape(-1,1))   
+    codificador_hydrogen.fit(np.array(set_hydrogen).reshape(-1,1))   
     
-    hybrid_set = list(set(hybridization))
+    set_hybrid = list(set(hybridization))
     codificador_hybrid = OneHotEncoder()
-    codificador_hybrid.fit(np.array(hybrid_set).reshape(-1,1))
+    codificador_hybrid.fit(np.array(set_hybrid).reshape(-1,1))
+    
+    set_implicit_valence = list(set(implicit_valence))
+    codificador_implicit_valence = OneHotEncoder()
+    codificador_implicit_valence.fit(np.array(set_implicit_valence).reshape(-1,1))
     
     #edges
-    bond_type_set = list(set(bond_type))
+    set_bond_type = list(set(bond_type))
     codificador_bond_type = OneHotEncoder()
-    codificador_bond_type.fit(np.array(bond_type_set).reshape(-1,1))
+    codificador_bond_type.fit(np.array(set_bond_type).reshape(-1,1))
     
-    in_ring_set = list(set(in_ring))
+    set_in_ring = list(set(in_ring))
     codificador_in_ring= OneHotEncoder()
-    codificador_in_ring.fit(np.array(in_ring_set).reshape(-1,1))
+    codificador_in_ring.fit(np.array(set_in_ring).reshape(-1,1))
     
-    conjugated_set = list(set(conjugated))
+    set_conjugated = list(set(conjugated))
     codificador_conjugated= OneHotEncoder()
-    codificador_conjugated.fit(np.array(conjugated_set).reshape(-1,1))
+    codificador_conjugated.fit(np.array(set_conjugated).reshape(-1,1))
     
-    aromatic_bond_set = list(set(bond_aromatic))
+    set_aromatic_bond = list(set(bond_aromatic))
     codificador_aromatic_bond = OneHotEncoder()
-    codificador_aromatic_bond.fit(np.array(aromatic_bond_set).reshape(-1,1))
+    codificador_aromatic_bond.fit(np.array(set_aromatic_bond).reshape(-1,1))
     
-    valence_contribution_i_set = list(set(valence_contribution_i))
+    set_valence_contribution_i = list(set(valence_contribution_i))
     codificador_valence_contribution_i = OneHotEncoder()
-    codificador_valence_contribution_i.fit(np.array(valence_contribution_i_set).reshape(-1,1))
+    codificador_valence_contribution_i.fit(np.array(set_valence_contribution_i).reshape(-1,1))
     
-    valence_contribution_f_set = list(set(valence_contribution_f))
+    set_valence_contribution_f = list(set(valence_contribution_f))
     codificador_valence_contribution_f = OneHotEncoder()
-    codificador_valence_contribution_f.fit(np.array(valence_contribution_f_set).reshape(-1,1))
+    codificador_valence_contribution_f.fit(np.array(set_valence_contribution_f).reshape(-1,1))
 
     node_features_dict = defaultdict(list)
     edge_features_dict = defaultdict(list)
     
-    for atom, aromatic, bonds, hydrogen, hybrid in zip(atomic_number, aromaticity, num_bonds, bonded_hydrogens, hybridization):
-        node_key_features_combined = f"{atom}_{aromatic}_{bonds}_{hydrogen}_{hybrid}"
+    for atom, aromatic, bonds, hydrogen, hybrid, impli_vale in zip(atomic_number, aromaticity, num_bonds, bonded_hydrogens, hybridization,implicit_valence ):
+        
+        node_key_features_combined = f"{atom}_{aromatic}_{bonds}_{hydrogen}_{hybrid}_{impli_vale}"
         
         atomic_feature  = codificador_atomic.transform([[atom]]).toarray()[0]
         aromatic_feature = codificador_aromatic.transform([[aromatic]]).toarray()[0]
         bonds_feature = codificador_bonds.transform([[bonds]]).toarray()[0]
         hydrogen_feature = codificador_hydrogen.transform([[hydrogen]]).toarray()[0]
         hybrid_feature = codificador_hybrid.transform([[hybrid]]).toarray()[0]
+        impli_vale_feature = codificador_implicit_valence.transform([[impli_vale]]).toarray()[0]
         
-        feature_node = np.concatenate((atomic_feature, aromatic_feature, bonds_feature, hydrogen_feature, hybrid_feature))
+        feature_node = np.concatenate((atomic_feature, aromatic_feature, bonds_feature, hydrogen_feature, hybrid_feature, impli_vale_feature))
         node_features_dict[node_key_features_combined] = feature_node
     
     for bond, ring, conjugat, aroma, valence_i, valence_f in zip(bond_type, in_ring, conjugated, bond_aromatic, valence_contribution_i, valence_contribution_f):
@@ -299,7 +254,7 @@ def get_features(sequence_list):
         edge_features_dict[edge_key_features_combined] = feature_edge
         
     
-    return  peptide_features_dict, amino_features_dict, node_features_dict, edge_features_dict
+    return node_features_dict, edge_features_dict
 
 #Getting the edges to the molecule
 def get_edge_indices(molecule):
