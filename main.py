@@ -11,6 +11,7 @@ from src.device import device_info
 from src.data import GeoDataset_1, GeoDataset_2,  GeoDataset_3
 from src.model import GCN_Geo
 from src.process import train, validation, predict_test
+from src.evaluation_metrics import evaluate_model
 from math import sqrt
 from torchmetrics.classification import BinaryConfusionMatrix
 from sklearn.metrics import roc_curve, auc
@@ -48,19 +49,18 @@ time_preprocessing = (finish_time_preprocessing - start_time) / 60 #TODO
 
 
 # Dataset Split Percent:
-''' training_percentage = 0.98
-validation_percentage = 0.01
-test_percentage = 0.01
+#training_percentage = 0.98
+#validation_percentage = 0.01
+#test_percentage = 0.01
 
-n_train = int(len(training_datataset) * training_percentage)
-n_val = int(len(training_datataset) * validation_percentage)
-n_test = len(training_datataset) - n_train - n_val '''
+#n_train = int(len(training_datataset) * training_percentage)
+##n_test = len(training_datataset) - n_train - n_val
 
 # Define objetos de conjunto de entrenamiento, validación y prueba de PyTorch:
-''' train_set, val_set, test_set = torch.utils.data.random_split(training_datataset,
-                                                             [n_train, n_val, n_test],
-                                                             generator=torch.Generator().manual_seed(42))
- '''
+#train_set, val_set, test_set = torch.utils.data.random_split(training_datataset,
+#                                                             [n_train, n_val, n_test],
+#                                                             generator=torch.Generator().manual_seed(42))
+
 # Define dataloaders para conjuntos de entrenamiento, validación y prueba:
 batch_size = 100  
 
@@ -171,7 +171,7 @@ threshold = 0.5
 
 
 # ------------------------------------////////// Training set /////////////---------------------------------------------------
-#TODO hacer un script con una funcion que haga todo esto
+
 
 training_input, training_target, training_pred, training_pred_csv = predict_test(model, train_dataloader, device, weights_file, threshold, type_dataset='training')
 
@@ -185,74 +185,16 @@ prediction_train_set = {
 df = pd.DataFrame(prediction_train_set)
 df.to_excel('results/training_set_prediction.xlsx', index=False)
 
-bcm = BinaryConfusionMatrix(task="binary", threshold=threshold, num_classes=2).to(device) 
-confusion_matrix = bcm(training_pred, training_target)
-confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
+# Evaluation metrics:
 
+TP_training, TN_training, FP_training, FN_training, ACC_training, PR_training, \
+SN_training, SP_training, F1_training, mcc_training, roc_auc_training = \
+evaluate_model(prediction=training_pred,
+               target=training_target,
+               dataset_type='Training',
+               threshold=threshold,
+               device=device)
 
-TN_training = confusion_matrix[0, 0].cpu().numpy()
-FP_training = confusion_matrix[0, 1].cpu().numpy()
-FN_training = confusion_matrix[1, 0].cpu().numpy()
-TP_training = confusion_matrix[1, 1].cpu().numpy()
-
-
-# Añadir números a la matriz de confusión
-cmap = plt.get_cmap('Blues')
-plt.matshow(confusion_matrix_np, cmap=cmap)
-plt.title('Confusion Matrix Plot - Training')
-plt.colorbar()
-
-# Añadir números a la matriz de confusión
-for i in range(confusion_matrix_np.shape[0]):
-    for j in range(confusion_matrix_np.shape[1]):
-        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='grey', fontsize=18)
-
-plt.xlabel('Predicted Negative         Predicted Positive')
-plt.ylabel('True Positive               True Negative')
-plt.savefig('results/training_bcm.png', dpi=216)
-plt.show()
-
-# Cálculo de métricas de evaluación
-ACC_training = (TP_training + TN_training) / (TP_training + TN_training + FP_training + FN_training)
-
-PR_training = TP_training / (TP_training + FP_training)
-
-SN_training = TP_training / (TP_training + FN_training)
-
-SP_training = TN_training / (TN_training + FP_training)
-
-F1_training = 2 * (PR_training * SN_training) / (PR_training + SN_training)
-
-# Calculate Matthews Correlation Coefficient (MCC)
-mcc_training = (TP_training * TN_training - FP_training * FN_training) / \
-                        ((TP_training + FP_training) * (TP_training + FN_training) * \
-                         (TN_training + FP_training) * (TN_training + FN_training)) ** 0.5
-
-
-# Calcular la curva ROC
-fpr, tpr, thresholds = roc_curve( training_target.cpu().numpy(), training_pred.cpu().numpy())
-
-# Calcular el área bajo la curva ROC (AUC)
-roc_auc_training = auc(fpr, tpr)
-
-# Trazar la curva ROC
-plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc_training:.2f}')
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
-plt.xlabel('False Positive Rate (FPR)')
-plt.ylabel('True Positive Rate (TPR)')
-plt.title('Receiver Operating Characteristic (ROC) Curve - Trainning Set')
-plt.legend(loc='lower right', fontsize=16)
-plt.savefig('results/training_ROC.png', dpi=216)
-plt.show()
-
-# Imprimir las métricas
-print('/// Evaluation Metrics - Trainning ///\n') 
-print(f"Accuracy: {ACC_training:.3f}")
-print(f"Precision: {PR_training:.3f}")
-print(f"Recall: {SN_training:.3f}")
-print(f"Specificity: {SP_training:.3f}")
-print(f"F1 Score: {F1_training:.3f}")
 
 #-------------------------------------------- ////////// Validation Set //////////-------------------------------------------------
 validation_input, validation_target, validation_pred, validation_pred_csv = predict_test(model, val_dataloader, device, weights_file, threshold, type_dataset='validation')
@@ -268,73 +210,23 @@ df = pd.DataFrame(prediction_validation_set)
 df.to_excel('results/validation_set_prediction.xlsx', index=False)
 
 
-bcm = BinaryConfusionMatrix(task="binary", threshold=threshold, num_classes=2).to(device) 
-confusion_matrix = bcm(validation_pred, validation_target)
-confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
+# Evaluation metrics:
 
-TN_validation = confusion_matrix[0, 0].cpu().numpy() 
-FP_validation = confusion_matrix[0, 1].cpu().numpy()
-FN_validation = confusion_matrix[1, 0].cpu().numpy() 
-TP_validation = confusion_matrix[1, 1].cpu().numpy()
-
-cmap = plt.get_cmap('Blues')
-plt.matshow(confusion_matrix_np, cmap=cmap)
-plt.title('Confusion Matrix Plot - Validation')
-plt.colorbar()
-
-# Añadir números a la matriz de confusión
-for i in range(confusion_matrix_np.shape[0]):
-    for j in range(confusion_matrix_np.shape[1]):
-        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='grey', fontsize=18)
-
-plt.xlabel('Predicted Negative          Predicted Positive')
-plt.ylabel('True Positive                True Negative')
-plt.savefig('results/validation_bcm.png', dpi=216)
-plt.show() 
-
-# Cálculo de métricas de evaluación
-ACC_validation = (TP_validation + TN_validation) / (TP_validation + TN_validation + FP_validation + FN_validation)
-
-PR_validation = TP_validation / (TP_validation + FP_validation)
-
-SN_validation = TP_validation / (TP_validation + FN_validation)
-
-SP_validation = TN_validation / (TN_validation + FP_validation)
-
-F1_validation = 2 * (PR_validation * SN_validation) / (PR_validation + SN_validation)
-
-#Calculate Matthews Correlation Coefficient (MCC)
-mcc_validation = (TP_validation * TN_validation - FP_validation * FN_validation) / \
-                        ((TP_validation + FP_validation) * (TP_validation + FN_validation) * \
-                         (TN_validation + FP_validation) * (TN_validation + FN_validation)) ** 0.5
-
-# Calcular la curva ROC
-fpr, tpr, thresholds = roc_curve( validation_target.cpu().numpy(), validation_pred.cpu().numpy())
-
-# Calcular el área bajo la curva ROC (AUC)
-roc_auc_validation = auc(fpr, tpr)
-
-# Trazar la curva ROC
-plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc_validation:.2f}')
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
-plt.xlabel('False Positive Rate (FPR)')
-plt.ylabel('True Positive Rate (TPR)')
-plt.title('Receiver Operating Characteristic (ROC) Curve - Validation Set')
-plt.legend(loc='lower right', fontsize=16)
-plt.savefig('results/validation_ROC.png', dpi=216)
-plt.show()
-
-# Imprimir las métricas
-print('/// Evaluation Metrics - Validation ///\n') 
-print(f"Accuracy: {ACC_validation:.3f}")
-print(f"Precision: {PR_validation:.3f}")
-print(f"Recall: {SN_validation:.3f}")
-print(f"Specificity: {SP_validation:.3f}")
-print(f"F1 Score: {F1_validation:.3f}")
+TP_validation, TN_validation, FP_validation, FN_validation, ACC_validation, PR_validation, \
+SN_validation, SP_validation, F1_validation, mcc_validation, roc_auc_validation = \
+evaluate_model(prediction = validation_pred,
+               target = validation_target,
+               dataset_type = 'Validation',
+               threshold = threshold,
+               device = device)
 
 # --------------------------------------------////////// Test Set //////////---------------------------------------------------
+start_time_testing = time.time()
+
 test_input, test_target, test_pred, test_pred_csv = predict_test(model, test_dataloader, device, weights_file,threshold, type_dataset='testing')
+
+finish_time_testing = time.time()
+time_prediction = (finish_time_testing- start_time_testing) / 60
 
 #Saving a CSV file with prediction values
 prediction_test_set = {
@@ -346,84 +238,19 @@ prediction_test_set = {
 df = pd.DataFrame(prediction_test_set)
 df.to_excel('results/test_set_prediction.xlsx', index=False)
 
-bcm = BinaryConfusionMatrix(task="binary",threshold=threshold, num_classes=2).to(device) 
-confusion_matrix = bcm(test_pred, test_target)
-confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
+# Evaluation metrics:
+
+TP_test, TN_test, FP_test, FN_test, ACC_test, PR_test, \
+SN_test, SP_test, F1_test, mcc_test, roc_auc_test = \
+evaluate_model(prediction=test_pred,
+               target = test_target,
+               dataset_type = 'Testing',
+               threshold = threshold,
+               device = device)
 
 
-TN_test = confusion_matrix[0, 0].cpu().numpy()
-FP_test = confusion_matrix[0, 1].cpu().numpy()
-FN_test= confusion_matrix[1, 0].cpu().numpy()
-TP_test = confusion_matrix[1, 1].cpu().numpy()
-
-
-# Añadir números a la matriz de confusión
-cmap = plt.get_cmap('YlGn')
-plt.matshow(confusion_matrix_np, cmap=cmap)
-plt.title('Confusion Matrix Plot - Test')
-plt.colorbar()
-
-# Añadir números a la matriz de confusión
-for i in range(confusion_matrix_np.shape[0]):
-    for j in range(confusion_matrix_np.shape[1]):
-        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='black', fontsize=18)
-
-plt.xlabel('Predicted Negative         Predicted Positive')
-plt.ylabel('True Positive               True Negative')
-plt.savefig('results/test_bcm.png', dpi=216)
-plt.show()
-
-# Cálculo de métricas de evaluación
-ACC_test = (TP_test + TN_test) / (TP_test + TN_test + FP_test+ FN_test)
-
-PR_test = TP_test / (TP_test + FP_test)
-
-SN_test = TP_test / (TP_test + FN_test)
-
-SP_test = TN_test / (TN_test + FP_test)
-
-F1_test = 2 * (PR_test * SN_test) / (PR_test + SN_test)
-
-#Calculate Matthews Correlation Coefficient (MCC)
-mcc_test = (TP_test * TN_test - FP_test * FN_test) / \
-                        ((TP_test + FP_test) * (TP_test + FN_test) * \
-                         (TN_test + FP_test) * (TN_test + FN_test)) ** 0.5
-
-# Calcular la curva ROC
-fpr, tpr, thresholds = roc_curve( test_target.cpu().numpy(), test_pred.cpu().numpy())
-
-# Calcular el área bajo la curva ROC (AUC)
-roc_auc_test= auc(fpr, tpr)
-
-# Trazar la curva ROC
-plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, color='mediumseagreen', lw=2, label=f'AUC = {roc_auc_test:.2f}')
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
-plt.xlabel('False Positive Rate (FPR)',fontsize=14)
-plt.ylabel('True Positive Rate (TPR)',fontsize=14)
-plt.title('Receiver Operating Characteristic (ROC) Curve - Test Set')
-plt.legend(loc='lower right', fontsize=16)
-plt.savefig('results/test_ROC.png', dpi=216)
-plt.show()
-
-# Imprimir las métricas
-print('/// Evaluation Metrics - Test ///\n') 
-print(f"Accuracy: {ACC_test:.3f}")
-print(f"Precision: {PR_test:.3f}")
-print(f"Recall: {SN_test:.3f}")
-print(f"Specificity: {SP_test:.3f}")
-print(f"F1 Score: {F1_test:.3f}")
-
-
-#-----------------Times---------------------------
 finish_time = time.time()
-time_prediction = (finish_time - finish_time_training) / 60
 total_time = (finish_time - start_time) / 60
-print("\n //// Preprocessing time: {:3f} minutes ////".format(time_preprocessing))
-print("\n //// Training time: {:3f} minutes ////".format(time_training))
-print("\n //// Prediction time: {:3f} minutes ////".format(time_prediction))
-print("\n //// Total time: {:3f} minutes ////".format(total_time))
-
 
 #--------------------------------///////////Result DataFrame////////////---------------------------------------
 data = {
@@ -434,7 +261,6 @@ data = {
     "edge_dim_feature",
     "hidden_dim_nn_1",
     "hidden_dim_nn_2",
-    "hidden_dim_nn_3",
     "hidden_dim_gat_0",
     "hidden_dim_fcn_1",
     "hidden_dim_fcn_2",
@@ -489,7 +315,6 @@ data = {
         edge_dim_feature ,
         hidden_dim_nn_1 ,
         hidden_dim_nn_2 ,
-        hidden_dim_nn_3,
         hidden_dim_gat_0,
         hidden_dim_fcn_1 ,
         hidden_dim_fcn_2 ,
@@ -658,107 +483,6 @@ data = {
 df = pd.DataFrame(data)
 df.to_csv('results/results_training_validation_test.csv', index=False)
 
-#------------------Testing new datasets--------------------------------------------
-
-''' 
-torch.cuda.empty_cache()
-dataloader_test = DataLoader(datasets[test_dataset], batch_size, shuffle=True)
-independent_test_input, independent_test_target, independet_test_pred, independet_test_pred_csv = predict_test(model, dataloader_test, device, weights_file, threshold, test_dataset)
-
-
-#Saving a CSV file with prediction values
-indenpendet_test = {
-    'Sequence': independent_test_input,
-    'Target': independent_test_target.cpu().numpy(),
-    'Prediction': independet_test_pred_csv 
-}
-
-df_test = pd.DataFrame(indenpendet_test)
-df_test.to_excel('results/independet_test.xlsx', index=False)
-
-bcm = BinaryConfusionMatrix(task="binary",threshold=threshold, num_classes=2).to(device) 
-confusion_matrix = bcm(independet_test_pred, independent_test_target)
-confusion_matrix_np = confusion_matrix.detach().cpu().numpy()
-
-TN_independent_test = confusion_matrix[0, 0].cpu().numpy()
-FP_independent_test = confusion_matrix[0, 1].cpu().numpy()
-FN_independent_test= confusion_matrix[1, 0].cpu().numpy()
-TP_independent_test = confusion_matrix[1, 1].cpu().numpy()
-
-
-# Añadir números a la matriz de confusión
-cmap = plt.get_cmap('Blues')
-plt.matshow(confusion_matrix_np, cmap=cmap)
-plt.title('Confusion Matrix Plot - Independent dataset - Test')
-plt.colorbar()
-
-# Añadir números a la matriz de confusión
-for i in range(confusion_matrix_np.shape[0]):
-    for j in range(confusion_matrix_np.shape[1]):
-        plt.text(j, i, str(confusion_matrix_np[i, j]), ha='center', va='center', color='grey', fontsize=18)
-
-plt.xlabel('Predicted Negative         Predicted Positive')
-plt.ylabel('True Positive               True Negative')
-plt.savefig('results/independent_bcm.png', dpi=216)
-plt.show()
-
-# Cálculo de métricas de evaluación
-ACC_independent_test = (TP_independent_test + TN_independent_test) / (TP_independent_test + TN_independent_test + FP_independent_test+ FN_independent_test)
-
-PR_independent_test = TP_independent_test / (TP_independent_test + FP_independent_test)
-
-SN_independent_test = TP_independent_test / (TP_independent_test + FN_independent_test)
-
-SP_independent_test = TN_independent_test / (TN_independent_test + FP_independent_test)
-
-F1_independent_test = 2 * (PR_independent_test * SN_independent_test) / (PR_independent_test + SN_independent_test)
-
-# Calculate Matthews Correlation Coefficient (MCC)
-mcc_independent_test = (TP_independent_test * TN_independent_test - FP_independent_test * FN_independent_test) / \
-                        ((TP_independent_test + FP_independent_test) * (TP_independent_test + FN_independent_test) * \
-                         (TN_independent_test + FP_independent_test) * (TN_independent_test + FN_independent_test)) ** 0.5
-
-# Calcular la curva ROC
-fpr, tpr, thresholds = roc_curve(independent_test_target.cpu().numpy(), independet_test_pred.cpu().numpy())
-
-# Calcular el área bajo la curva ROC (AUC)
-roc_auc_independent_test= auc(fpr, tpr)
-
-# Trazar la curva ROC
-plt.figure(figsize=(8, 6))
-plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc_independent_test:.2f}')
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Guess')
-plt.xlabel('False Positive Rate (FPR)')
-plt.ylabel('True Positive Rate (TPR)')
-plt.title('Receiver Operating Characteristic (ROC) Curve - Independet Dataset')
-plt.legend(loc='lower right', fontsize=16)
-plt.savefig('results/independet_test_ROC.png', dpi=216)
-plt.show()
-
-# Saving results to CSV
-result_dict = {
-    'Accuracy': [ACC_independent_test],
-    'Precision': [PR_independent_test],
-    'Recall': [SN_independent_test],
-    'Specificity': [SP_independent_test],
-    'F1 Score': [F1_independent_test],
-    'MCC': [mcc_independent_test],
-    'AUC-ROC':[roc_auc_independent_test]
-}
-
-result_df = pd.DataFrame(result_dict)
-result_df.to_csv('results/result_independent_dataset.csv', index=False)
-
-# Imprimir las métricas
-
-print('/// Evaluation Metrics - Test ///\n') 
-print(f"Accuracy: {ACC_independent_test:.3f}")
-print(f"Precision: {PR_independent_test:.3f}")
-print(f"Recall: {SN_independent_test:.3f}")
-print(f"Specificity: {SP_independent_test:.3f}")
-print(f"F1 Score: {F1_independent_test:.3f}")
-print(f"MCC: {mcc_independent_test:.3f}")
- '''
 
 #-------------------------------------///////// Shapley Values Sampling ////// -------------------------------------------
 ''' 

@@ -6,11 +6,13 @@ from rdkit.Chem import Crippen, Descriptors
 
 from sklearn.preprocessing import OneHotEncoder
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from src.utils import get_aminoacids
 
 import os
 import torch
 
-def get_aminoacid_features(): #TODO remplazar aca por sequence_list para tener los aminoacidos encontrados y no tenerlos manualmente
+def get_aminoacid_features(sequences): #TODO remplazar aca por sequence_list para tener los aminoacidos encontrados y no tenerlos manualmente
+    
     
     wt_amino =[]
     aromaticity_amino = []
@@ -19,9 +21,10 @@ def get_aminoacid_features(): #TODO remplazar aca por sequence_list para tener l
     p_iso_amino = []
     logp_amino = []
     atoms_amino = []
-    
+     
+     
     aminoacids_set = ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
-   
+
     for amino in aminoacids_set:
         amino_mol = get_molecule(amino)
         amino_biopython = ProteinAnalysis(amino)

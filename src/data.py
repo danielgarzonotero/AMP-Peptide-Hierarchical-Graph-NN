@@ -37,7 +37,8 @@ class GeoDataset_1(InMemoryDataset):
         blosum62_dict = {}
         sequences_dict = {}
         
-        aminoacids_ft_dict = get_aminoacid_features()
+        
+        aminoacids_ft_dict = get_aminoacid_features(self.x)
         
         for i, (x, y) in enumerate(zip(self.x, self.y)):
             device_info_instance = device_info()
