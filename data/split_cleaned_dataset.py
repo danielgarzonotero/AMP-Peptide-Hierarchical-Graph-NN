@@ -17,7 +17,7 @@ import pandas as pd
 
 
 # Lee el archivo CSV en un DataFrame
-df = pd.read_csv('datasets/Xiao_920_nonamp_final.csv', header=None)
+df = pd.read_csv('Xiao_AMP_trainc09n3g2d1.fasta', header=None)
 
 # Filtra las filas que contienen secuencias de aminoácidos
 df = df[~(df.index % 2 == 0)]
@@ -25,7 +25,7 @@ df = df[~(df.index % 2 == 0)]
 df = df.reset_index(drop=True)
 
 # Guarda el DataFrame resultante en un nuevo archivo CSV
-df.to_csv('datasets/Xiao_920_nonamp_final_2.csv', header=False, index=False)
+df.to_csv('Xiao_AMP_trainc09n3g2d1.csv', header=False, index=False)
 filas, columnas = df.shape
 print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 
@@ -34,13 +34,13 @@ print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 import pandas as pd
 
 # Lee el archivo CSV en un DataFrame
-df = pd.read_csv('datasets/Xiao_920_amp_final_2.csv', header=None)
+df = pd.read_csv('Xiao_AMP_trainc04n2g2d1.csv', header=None)
 
 # Agrega una columna con el valor 1 a cada fila
 df['Activity'] = 1
 
 # Guarda el DataFrame resultante en un nuevo archivo CSV con un tabulador como delimitador
-df.to_csv('datasets/Xiao_920_amp_final_3.csv', sep=',', header=None, index=False)
+df.to_csv('Xiao_AMP_trainc04n2g2d1.csv', sep=',', header=None, index=False)
 filas, columnas = df.shape
 print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 
@@ -49,8 +49,10 @@ print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 import pandas as pd
 
 # Lee los dos DataFrames desde archivos CSV sin encabezados
-df1 = pd.read_csv('9_Xiao_AMP_train.csv')
-df2 = pd.read_csv('9_Xiao_nonAMP_train.csv')
+df1 = pd.read_csv('Xiao_AMP_trainc09n3g2d1.csv')
+print(df1.shape)
+df2 = pd.read_csv('Xiao_nonAMP_09train.csv')
+print(df2.shape)
 
 # Combina los DataFrames sin tener en cuenta los encabezados
 df_combined = pd.concat([df1, df2], ignore_index=True)
@@ -59,7 +61,9 @@ df_combined = pd.concat([df1, df2], ignore_index=True)
 df_combined.columns = ['Sequence', 'Activity']
 
 # Guarda el DataFrame combinado en un archivo CSV
-df_combined.to_csv('datasets/9_Xiao_training.csv', index=False)
+df_combined.to_csv('datasets/09_Xiao_training.csv', index=False)
+
+# Imprime la forma del DataFrame combinado
 filas, columnas = df_combined.shape
 print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 
@@ -69,13 +73,13 @@ print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 import pandas as pd
 import random
 
-df = pd.read_csv('datasets/9_Xiao_training.csv' )
+df = pd.read_csv('datasets/04_Xiao_training.csv' )
 
 
 df_shuffled = df.sample(frac=1, random_state=1).reset_index(drop=True)
-df_shuffled.to_csv('datasets/9_Xiao_training.csv', index=False, quoting=None)
+df_shuffled.to_csv('datasets/04_Xiao_training.csv', index=False, quoting=None)
 
-df = pd.read_csv('datasets/9_Xiao_training.csv')
+df = pd.read_csv('datasets/04_Xiao_training.csv')
 filas, columnas = df.shape
 print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 
@@ -84,10 +88,12 @@ print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 import pandas as pd
 import random
 
-df = pd.read_csv('Xiao_AMP_train.csv' )
+df = pd.read_csv('Xiao_nonAMP_train.csv' )
+df_target = pd.read_csv('Xiao_AMP_trainc09n3g2d1.csv' )
 
 total_rows = len(df)
-target_rows = 104
+
+target_rows = len(df_target)
 
 if total_rows > target_rows:
     
@@ -98,8 +104,8 @@ if total_rows > target_rows:
 
     df = df.drop(rows_to_drop_indices)
 
-df.to_csv('9_Xiao_AMP_train.csv', index=False, quoting=None)
-df = pd.read_csv('9_Xiao_AMP_train.csv')
+df.to_csv('Xiao_nonAMP_09train.csv', index=False, quoting=None)
+df = pd.read_csv('Xiao_nonAMP_09train.csv')
 filas, columnas = df.shape
 print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 

@@ -1,5 +1,5 @@
 #%%
-from rdkit import Chem
+''' from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import pandas as pd
@@ -34,7 +34,7 @@ def filter_and_save(path_dataset, condition, output_csv):
 
 # Example usage:
 filter_and_save('multiAMP_test.csv', 'all_nonamp', 'Ching_nonAMP_test.csv')
-
+ '''
 
 # %%
 from rdkit import Chem
@@ -53,8 +53,13 @@ def distribution(property, path):
     # 10: Isoelectric Point # 11: Instability Index  
     
     #Filtering the result excel depending the condition
-    df_new = pd.read_csv(path).copy()
-    
+    if path.endswith('.csv'):
+        # Leyendo el archivo CSV
+        df_new = pd.read_csv(path).copy()
+    else:
+        # Leyendo el archivo Excel
+        df_new = pd.read_excel(path).copy()
+        
     condition_filter_amp = ((df_new['Activity'] == 1) )
     condition_filter_nonamp = ((df_new['Activity'] == 0) )
 
@@ -67,7 +72,7 @@ def distribution(property, path):
         aminoacidos = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
         for aa in aminoacidos:
             df_new_amp[aa] = df_new_amp['Sequence'].apply(lambda x: x.count(aa) / len(x))
-            df_new_nonamp[aa] = df_new_amp['Sequence'].apply(lambda x: x.count(aa) / len(x))
+            df_new_nonamp[aa] = df_new_nonamp['Sequence'].apply(lambda x: x.count(aa) / len(x))
             
         avg_concentrations_amp = df_new_amp[aminoacidos].mean().sort_values(ascending=False)
         avg_concentrations_nonamp = df_new_nonamp[aminoacidos].mean().sort_values(ascending=False)
@@ -75,7 +80,7 @@ def distribution(property, path):
         avg_amp_df = pd.DataFrame({'Amino Acid': avg_concentrations_amp.index,
                                'AMP Average Concentration': avg_concentrations_amp.round(4)})
         avg_nonamp_df = pd.DataFrame({'Amino Acid': avg_concentrations_nonamp.index,
-                               'AMP Average Concentration': avg_concentrations_nonamp.round(4)})
+                               'nonAMP Average Concentration': avg_concentrations_nonamp.round(4)})
         
         avg_amp_df.to_csv('amp_average_concentrations.csv', index=False)
         avg_nonamp_df.to_csv('nonamp_average_concentrations.csv', index=False)
@@ -222,7 +227,7 @@ def distribution(property, path):
         pass
     
     elif property == 8:
-        property = 'Hidrophobicity'
+        property = 'Hydrophobicity'
         
         def hidrophobicity(peptide_sequence):
             peptide_analysis = ProteinAnalysis(peptide_sequence)
@@ -309,11 +314,17 @@ def distribution(property, path):
             plt.legend(fontsize='20')
 
             # Añadir texto con medias y desviaciones estándar
-            plt.text(0.95, 0.055, f"Helix: Mean={helix_mean_amp:.2f}, Std={helix_std_amp:.2f}\nTurn: Mean={turn_mean_amp:.2f}, Std={turn_std_amp:.2f}\nSheet: Mean={sheet_mean_amp:.2f}, Std={sheet_std_amp:.2f}", 
+            plt.text(0.95, 0.055, f"Helix Mean={helix_mean_amp:.2f}±{helix_std_amp:.2f}\nTurn Mean={turn_mean_amp:.2f}±{turn_std_amp:.2f}\nSheet Mean={sheet_mean_amp:.2f}±{sheet_std_amp:.2f}", 
                     transform=plt.gca().transAxes, ha='right', color='black',
-                    bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
-
+                    bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 16)
+            plt.axvline(helix_mean_amp, color='yellowgreen', linestyle='dashed', linewidth=2)
+            plt.axvline(turn_mean_amp, color='slateblue', linestyle='dashed', linewidth=2)
+            plt.axvline(sheet_mean_amp, color='teal', linestyle='dashed', linewidth=2)
+            plt.xticks(fontsize=18)  # Set font size for x-axis tick labels
+            plt.yticks(fontsize=18)  # Set font size for y-axis tick labels 
+            
             plt.show()
+            print(f"Helix Mean={helix_mean_amp:.3f}±{helix_std_amp:.3f}\nTurn Mean={turn_mean_amp:.3f}±{turn_std_amp:.3f}\nSheet Mean={sheet_mean_amp:.3f}±{sheet_std_amp:.3f}")
             
             plt.figure(figsize=(10, 6))
 
@@ -330,17 +341,24 @@ def distribution(property, path):
             plt.legend(fontsize='20')
 
             # Añadir texto con medias y desviaciones estándar
-            plt.text(0.95, 0.055, f"Helix: Mean={helix_mean_amp:.2f}, Std={helix_std_amp:.2f}\nTurn: Mean={turn_mean_amp:.2f}, Std={turn_std_amp:.2f}\nSheet: Mean={sheet_mean_amp:.2f}, Std={sheet_std_amp:.2f}", 
+            plt.text(0.95, 0.055, f"Helix Mean={helix_mean_amp:.2f}±{helix_std_amp:.2f}\nTurn Mean={turn_mean_amp:.2f}±{turn_std_amp:.2f}\nSheet Mean={sheet_mean_amp:.2f}±{sheet_std_amp:.2f}", 
                     transform=plt.gca().transAxes, ha='right', color='black',
-                    bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 12)
+                    bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 16)
+            plt.axvline(helix_mean_nonamp, color='yellowgreen', linestyle='dashed', linewidth=2)
+            plt.axvline(turn_mean_nonamp, color='slateblue', linestyle='dashed', linewidth=2)
+            plt.axvline(sheet_mean_nonamp, color='teal', linestyle='dashed', linewidth=2)
+            plt.xticks(fontsize=18)  # Set font size for x-axis tick labels
+            plt.yticks(fontsize=18)  # Set font size for y-axis tick labels 
+            
 
             plt.show()
             
             
         else:
             plt.figure(figsize=(10, 6), dpi=260)
-            plt.hist(df_new_nonamp[property], bins=10, color='tomato', alpha=0.9)
-            plt.hist(df_new_amp[property], bins=10, color='seagreen', alpha=0.3) 
+            plt.hist(df_new_amp[property], bins=10, color='seagreen', alpha=0.9) 
+            plt.hist(df_new_nonamp[property], bins=10, color='tomato', alpha=0.3)
+            
              
             
 
@@ -350,21 +368,26 @@ def distribution(property, path):
             plt.yticks(fontsize=18)  # Set font size for y-axis tick labels 
             plt.title(f"Distribution of {property}",size= 20)
 
-            # Añadir texto con medias y desviaciones estándar
+            #Añadir texto con medias y desviaciones estándar
             #plt.text(0.95, 0.85, f"Mean AMP={mean_amp:.2f}\nMean nonAMP={mean_nonamp:.2f}", 
             #        transform=plt.gca().transAxes, ha='right', color='black',
-            #        bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 17)
+            #        bbox=dict(facecolor='white', edgecolor='grey', boxstyle='round,pad=0.5'), size= 18)
             
             legend_handles = [
                 mpatches.Patch(color='green', alpha=0.5, label='AMP'),
                 mpatches.Patch(color='red', alpha=0.5, label='nonAMP')
             ]
             plt.legend(handles=legend_handles, loc='upper left', fontsize=17)
+            # Agregar la media al gráfico
+            plt.axvline(mean_amp, color='seagreen', linestyle='dashed', linewidth=1, label='Mean RT-AMP')
+            plt.axvline(mean_nonamp, color='tomato', linestyle='dashed', linewidth=1, label='Mean RT-nonAMP')
             
             plt.show()
+            print(f"AMP={mean_amp:.3f}±{std_amp:.3f}")
+            print(f"nonAMP={mean_nonamp:.3f}±{std_nonamp:.3f}")
+            
 
 
-#How to use it
 
 
 

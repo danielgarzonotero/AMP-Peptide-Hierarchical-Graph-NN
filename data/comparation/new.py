@@ -1,8 +1,8 @@
 #%%
-from distribution import distribution, filter_and_save
+from distribution import distribution
 
-print(distribution(2, 
-                   '/home/vvd9fd/Documents/Bilodeau Group/Codes/0.Research/AMP-Peptide-Hierarchical-Graph-NN/data/datasets/1b_Xiao_training.csv'))
+print(distribution(property=0,
+                   path='/home/vvd9fd/Documents/Bilodeau Group/Codes/0.Research/AMP-Peptide-Hierarchical-Graph-NN/results/FN.xlsx' ))
 
 
     # 0 : aa average concentration

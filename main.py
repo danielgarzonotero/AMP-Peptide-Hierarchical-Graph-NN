@@ -12,13 +12,6 @@ from src.data import GeoDataset_1, GeoDataset_2,  GeoDataset_3
 from src.model import GCN_Geo
 from src.process import train, validation, predict_test
 from src.evaluation_metrics import evaluate_model
-from math import sqrt
-from torchmetrics.classification import BinaryConfusionMatrix
-from sklearn.metrics import roc_curve, auc
-
-
-''' print("PyTorch version:", torch.__version__)
-print("PyTorch Geometric version:", torch_geometric.__version__) '''
 
 device_information = device_info()
 print(device_information)
@@ -73,7 +66,7 @@ test_dataloader = DataLoader(testing_datataset, batch_size, shuffle=True)
 ## RUN TRAINING LOOP: 
 
 # Train with a random seed to initialize weights:
-torch.manual_seed(0)
+torch.manual_seed(24)
 
 # Set up model:
 # Initial Inputs
@@ -153,7 +146,7 @@ plt.plot(val_losses, label='Validation loss', color='seagreen')
 
 # Agregar texto para la mejor pérdida de validación
 best_val_loss_epoch = val_losses.index(best_val_loss)  # Calcular el epoch correspondiente a la mejor pérdida de validación
-best_val_loss = best_val_loss*100
+best_val_loss = best_val_loss
 # Añadir la época y el mejor valor de pérdida como subtítulo
 plt.title('Training and Validation Loss\nAMP Dataset\nBest Validation Loss: Epoch {}, Value {:.4f}'.format(best_val_loss_epoch, best_val_loss), fontsize=17)
 # Aumentar el tamaño de la fuente en la leyenda
@@ -528,6 +521,24 @@ for batch in test_dataloader:
                             num_graphs=num_graphs
                         )
 
+#E.G:
+explainer = Explainer(
+    model=model,
+    algorithm=CaptumExplainer('IntegratedGradients'),
+    explanation_type='model',
+    model_config=dict(
+        mode='multiclass_classification',
+        task_level='node',
+        return_type='log_probs',
+    ),
+    node_mask_type='attributes',
+    edge_mask_type='object',
+    threshold_config=dict(
+        threshold_type='topk',
+        value=200,
+    ),
+)
+
 
 # Visualizar la importancia de las características para cada nodo en cada lote
 for i, explanation in enumerate(explanations):
@@ -535,4 +546,4 @@ for i, explanation in enumerate(explanations):
     explanation.visualize_feature_importance(path)
     print(f"Feature importance plot for node {i} has been saved to '{path}'")
  '''
-# %%
+    # %%
