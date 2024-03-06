@@ -56,9 +56,6 @@ time_preprocessing = (finish_time_preprocessing - start_time) / 60 #TODO
 
 # Define dataloaders para conjuntos de entrenamiento, validación y prueba:
 batch_size = 100  
-
-dataloader = DataLoader(training_datataset, batch_size, shuffle=True)
-
 train_dataloader = DataLoader(training_datataset, batch_size, shuffle=True)
 val_dataloader = DataLoader(validation_datataset , batch_size, shuffle=True)
 test_dataloader = DataLoader(testing_datataset, batch_size, shuffle=True)
@@ -358,192 +355,66 @@ data = {
     
 }
 
-''' data = {
-    "Metric": [
-    "node_features",
-    "edge_features",
-    "initial_dim_gcn",
-    "edge_dim_feature",
-    "hidden_dim_nn_1",
-    "hidden_dim_nn_2",
-    "hidden_dim_nn_3",
-    "hidden_dim_gat_0",
-    "hidden_dim_fcn_1",
-    "hidden_dim_fcn_2",
-    "hidden_dim_fcn_3",
-    "training_percentage*100",
-    "validation_percentage*100",
-    "test_percentage*100",
-    "batch_size",
-    "learning_rate",
-    "weight_decay",
-    "number_of_epochs",
-    "threshold",
-    "TP_training",
-    "TN_training",
-    "FP_training",
-    "FN_training",
-    "ACC_training",
-    "PR_training",
-    "SN_training",
-    "SP_training",
-    "F1_training",
-    "roc_auc_training",
-    "TP_validation",
-    "TN_validation",
-    "FP_validation",
-    "FN_validation",
-    "ACC_validation",
-    "PR_validation",
-    "SN_validation",
-    "SP_validation",
-    "F1_validation",
-    "roc_auc_validation",
-    "TP_test",
-    "TN_test",
-    "FP_test",
-    "FN_test",
-    "ACC_test",
-    "PR_test",
-    "SN_test",
-    "SP_test",
-    "F1_test",
-    "roc_auc_test",
-    "time_preprocessing",
-    "time_training",
-    "time_prediction",
-    "total_time"
-    ],
-    "Value": [
-        training_datataset.num_features,
-        training_datataset.num_edge_features,
-        initial_dim_gcn,
-        edge_dim_feature ,
-        hidden_dim_nn_1 ,
-        hidden_dim_nn_2 ,
-        hidden_dim_nn_3,
-        hidden_dim_gat_0,
-        hidden_dim_fcn_1 ,
-        hidden_dim_fcn_2 ,
-        hidden_dim_fcn_3 ,
-        training_percentage*100,
-        validation_percentage*100,
-        test_percentage*100,
-        batch_size,
-        learning_rate,
-        weight_decay,
-        number_of_epochs,
-        threshold,
-        TP_training,
-        TN_training,
-        FP_training,
-        FN_training,
-        ACC_training, 
-        PR_training, 
-        SN_training, 
-        SP_training,
-        F1_training,
-        roc_auc_training,
-        TP_validation,
-        TN_validation,
-        FP_validation,
-        FN_validation,
-        ACC_validation, 
-        PR_validation, 
-        SN_validation, 
-        SP_validation,
-        F1_validation,
-        roc_auc_validation,
-        TP_test,
-        TN_test,
-        FP_test,
-        FN_test,
-        ACC_test, 
-        PR_test, 
-        SN_test, 
-        SP_test,
-        F1_test,
-        roc_auc_test,
-        time_preprocessing, 
-        time_training,
-        time_prediction,
-        total_time
-    ],
-    
-}
- '''
 
 df = pd.DataFrame(data)
 df.to_csv('results/results_training_validation_test.csv', index=False)
 
 
-#-------------------------------------///////// Shapley Values Sampling ////// -------------------------------------------
-''' 
+ 
+#-------------------------------------///////// Explainer ////// -------------------------------------------
+
 explainer = Explainer(
-    model=model,
-    algorithm=CaptumExplainer('ShapleyValueSampling'),
-    explanation_type='model',
-    model_config=dict(
-        mode='binary_classification',
-        task_level='node',
-        return_type='raw',
-    ),
-    node_mask_type='attributes',
-    edge_mask_type=None,
-    threshold_config=dict(
-        threshold_type='hard',
-        value=0,
-    ),
-)
+                    model=model,
+                    algorithm=CaptumExplainer('IntegratedGradients'),
+                    explanation_type='phenomenon', #Explains the model prediction.
+                    model_config=dict(
+                        mode='regression', #or binary_classification?
+                        task_level='node', #ok
+                        return_type='raw', #ok, probs, log_probs
+                    ),
+                    node_mask_type='attributes', #None: Will not apply any mask on nodes. "object": Will mask each node."common_attributes": Will mask each feature."attributes": Will mask each feature across all nodes
+                    edge_mask_type=None,
+                    threshold_config=dict(
+                        threshold_type='hard', #The type of threshold to apply. The possible values are: None, hard,topk, topk_hard
+                        value = 0  #The value to use when thresholding.
+                    ),
+                    )
+
 
 # Generar explicaciones para cada nodo en cada lote del DataLoader
-explanations = []
-aminoacids_features_dict = torch.load('data/dictionaries/train_val_dataset/aminoacids_features_dict.pt')
-peptides_features_dict = torch.load('data/dictionaries/train_val_dataset/peptides_features_dict.pt')
-blosum62_dict = torch.load('data/dictionaries/train_val_dataset/blosum62_dict.pt')
+aminoacids_features_dict = torch.load('data/dictionaries/training/aminoacids_features_dict.pt', map_location=device)
+blosum62_dict = torch.load('data/dictionaries/training/blosum62_dict.pt', map_location=device)
 
-for batch in test_dataloader:
+batch_size = len(training_datataset.data.cc)
+train_dataloader = DataLoader(training_datataset, batch_size, shuffle=True)
+
+start_time = time.time()
+
+for batch in train_dataloader:
     batch = batch.to(device)
-    x, edge_index,  edge_attr, idx_batch, cc, monomer_labels, num_graphs, target = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels, batch.num_graphs, batch.y
-
+    x, target, edge_index,  edge_attr, idx_batch, cc, monomer_labels, amino = batch.x, batch.y, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels, batch.aminoacids_features
+    
+    node_features_dim = x.size(-1)
+    print("Número de características de los nodos:", node_features_dim)
+    
     explanation = explainer(
-                            x=x,
+                            x=x, 
                             target = target,
-                            index = None,
                             edge_index=edge_index,
                             edge_attr=edge_attr,
                             aminoacids_features_dict=aminoacids_features_dict,
-                            peptides_features_dict=peptides_features_dict,
                             blosum62_dict=blosum62_dict,
                             idx_batch=idx_batch,
                             cc=cc,
-                            monomer_labels=monomer_labels,
-                            num_graphs=num_graphs
+                            monomer_labels=monomer_labels
                         )
-
-#E.G:
-explainer = Explainer(
-    model=model,
-    algorithm=CaptumExplainer('IntegratedGradients'),
-    explanation_type='model',
-    model_config=dict(
-        mode='multiclass_classification',
-        task_level='node',
-        return_type='log_probs',
-    ),
-    node_mask_type='attributes',
-    edge_mask_type='object',
-    threshold_config=dict(
-        threshold_type='topk',
-        value=200,
-    ),
-)
+    
+    path = 'IntegratedGradients_feature_importance.png'
+    explanation.visualize_feature_importance(path, top_k=19) #Creates a bar plot of the node feature importances by summing up the node mask across all nodes.
+    finish_time = time.time()
+    time_prediction = (finish_time- start_time) / 60
+    print(time_prediction , 'min')
 
 
-# Visualizar la importancia de las características para cada nodo en cada lote
-for i, explanation in enumerate(explanations):
-    path = f'results/feature_importance_node_{i}.png'
-    explanation.visualize_feature_importance(path)
-    print(f"Feature importance plot for node {i} has been saved to '{path}'")
- '''
-    # %%
+
+# %%
