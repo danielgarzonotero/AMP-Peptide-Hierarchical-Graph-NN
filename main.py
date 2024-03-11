@@ -38,21 +38,7 @@ print('Number of NODES features: ', training_datataset.num_features)
 print('Number of EDGES features: ', training_datataset.num_edge_features)
 
 finish_time_preprocessing = time.time()
-time_preprocessing = (finish_time_preprocessing - start_time) / 60 #TODO
-
-
-# Dataset Split Percent:
-#training_percentage = 0.98
-#validation_percentage = 0.01
-#test_percentage = 0.01
-
-#n_train = int(len(training_datataset) * training_percentage)
-##n_test = len(training_datataset) - n_train - n_val
-
-# Define objetos de conjunto de entrenamiento, validación y prueba de PyTorch:
-#train_set, val_set, test_set = torch.utils.data.random_split(training_datataset,
-#                                                             [n_train, n_val, n_test],
-#                                                             generator=torch.Generator().manual_seed(42))
+time_preprocessing = (finish_time_preprocessing - start_time) / 60 
 
 # Define dataloaders para conjuntos de entrenamiento, validación y prueba:
 batch_size = 100  
@@ -93,12 +79,6 @@ model = GCN_Geo(
                 hidden_dim_fcn_3,
             ).to(device)
 
-# /////////////////// Transfer Learning /////////////////////////
-# Especifica la ruta del archivo donde se guardaron los pesos del modelo previamente
-#weights_path = 'SCX_best_model_weights.pth'
-
-# Carga los pesos en tu modelo
-#model.load_state_dict(torch.load(weights_path))
 
 
 #/////////////////// Training /////////////////////////////
@@ -116,7 +96,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 100
+number_of_epochs = 3
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch, type_dataset='training')
@@ -359,23 +339,21 @@ data = {
 df = pd.DataFrame(data)
 df.to_csv('results/results_training_validation_test.csv', index=False)
 
-
- 
 #-------------------------------------///////// Explainer ////// -------------------------------------------
 
 explainer = Explainer(
                     model=model,
                     algorithm=CaptumExplainer('IntegratedGradients'),
-                    explanation_type='phenomenon', #Explains the model prediction.
+                    explanation_type='model', #Explains the model prediction.
                     model_config=dict(
-                        mode='regression', #or binary_classification?
+                        mode='regression', #or 
                         task_level='node', #ok
-                        return_type='raw', #ok, probs, log_probs
+                        return_type='raw', #ok
                     ),
-                    node_mask_type='attributes', #None: Will not apply any mask on nodes. "object": Will mask each node."common_attributes": Will mask each feature."attributes": Will mask each feature across all nodes
+                    node_mask_type='attributes', #"attributes": Will mask each feature across all nodes
                     edge_mask_type=None,
                     threshold_config=dict(
-                        threshold_type='hard', #The type of threshold to apply. The possible values are: None, hard,topk, topk_hard
+                        threshold_type='hard', #The type of threshold to apply. 
                         value = 0  #The value to use when thresholding.
                     ),
                     )
@@ -410,11 +388,8 @@ for batch in train_dataloader:
                         )
     
     path = 'IntegratedGradients_feature_importance.png'
-    explanation.visualize_feature_importance(path, top_k=19) #Creates a bar plot of the node feature importances by summing up the node mask across all nodes.
+    explanation.visualize_feature_importance(path, top_k = node_features_dim) 
     finish_time = time.time()
     time_prediction = (finish_time- start_time) / 60
     print(time_prediction , 'min')
 
-
-
-# %%
