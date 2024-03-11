@@ -33,7 +33,6 @@ training_datataset = datasets['training_dataset']
 validation_datataset = datasets['validation_dataset']
 testing_datataset = datasets['testing_dataset']
 
-
 print('Number of NODES features: ', training_datataset.num_features)
 print('Number of EDGES features: ', training_datataset.num_edge_features)
 

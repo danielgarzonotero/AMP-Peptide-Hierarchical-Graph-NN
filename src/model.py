@@ -68,7 +68,7 @@ class GCN_Geo(torch.nn.Module):
         
         results_list = []
         
-        for i in range(len(cc)):  # Looping over the length of x
+        for i in range(len(cc)): 
             
             mask = idx_batch == i
             
