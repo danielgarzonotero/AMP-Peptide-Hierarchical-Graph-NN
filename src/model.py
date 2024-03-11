@@ -55,9 +55,8 @@ class GCN_Geo(torch.nn.Module):
                 blosum62_dict,
                 idx_batch,
                 cc,
-                monomer_labels,
-                num_graphs,
-                amino): #TODO REVISAR COMO SE GUARDA MONOMER LABEL, Y GUARDAR ASI AMINOACID FEATURES Y SI QUIZAS ASI FUNCIONA LA MASK
+                monomer_labels
+                ): #TODO REVISAR COMO SE GUARDA MONOMER LABEL, Y GUARDAR ASI AMINOACID FEATURES Y SI QUIZAS ASI FUNCIONA LA MASK
         
         x = self.dropout(x)
         x = self.nn_conv_1(x, edge_index, edge_attr)
@@ -69,17 +68,13 @@ class GCN_Geo(torch.nn.Module):
         
         results_list = []
         
-        for i in range(num_graphs):  # Looping over the length of x
+        for i in range(len(cc)):  # Looping over the length of x
             
             mask = idx_batch == i
             
             xi = x[mask]
             monomer_labels_i = monomer_labels[mask]
             cc_i = cc[i].item()
-            
-            #TODO Intentar remover los diccionarios usando mask
-            #monomer_labels_2 = monomer_labels[data.batch == i]
-            #xi_2 = x[data.batch == i]
             
             num_aminoacid = torch.max(monomer_labels_i).item()
             amino_index_i = get_amino_indices(num_aminoacid)
@@ -91,8 +86,7 @@ class GCN_Geo(torch.nn.Module):
             aminoacids_features_i = aminoacids_features_dict[cc_i]
             
             xi = torch.cat((xi, aminoacids_features_i), dim=1)
-            #xi = torch.cat((xi, aminoacids_features_i, blosum62_i), dim=1)
-            
+           
             # Graph convolution amino acid level
             xi = self.nn_gat_0(xi, amino_index_i) 
             xi = F.relu(xi)
@@ -115,9 +109,7 @@ class GCN_Geo(torch.nn.Module):
         
         p = self.linear4(p)
         
-        p = torch.transpose(p, 0, 1)
-        
-        return p
+        return p.view(-1,)
 
 
 device_info_instance = device_info()

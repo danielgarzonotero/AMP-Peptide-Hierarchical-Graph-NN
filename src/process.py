@@ -27,8 +27,7 @@ def train(model, device, dataloader, optim, epoch, type_dataset):
         # Zero out the optimizer:        
         optim.zero_grad()
         batch = batch.to(device)
-        
-        x, edge_index,  edge_attr, idx_batch, cc, monomer_labels, num_graphs, amino = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels, batch.num_graphs, batch.aminoacids_features
+        x, edge_index,  edge_attr, idx_batch, cc, monomer_labels = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels
         
         # Make a prediction:
         pred = model(
@@ -39,12 +38,9 @@ def train(model, device, dataloader, optim, epoch, type_dataset):
                     blosum62_dict,
                     idx_batch,
                     cc,
-                    monomer_labels,
-                    num_graphs,
-                    amino
+                    monomer_labels
         )
         
-        pred = pred.view(-1,)
         
         # Calculate the loss:
         loss = loss_func(pred.double(), batch.y.double())
@@ -90,7 +86,7 @@ def validation(model, device, dataloader, epoch, type_dataset):
         for batch in dataloader:
             
             batch = batch.to(device)
-            x, edge_index,  edge_attr, idx_batch, cc, monomer_labels, num_graphs, amino = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels, batch.num_graphs, batch.aminoacids_features
+            x, edge_index,  edge_attr, idx_batch, cc, monomer_labels = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels
             
             # Make a prediction:
             pred = model(
@@ -101,11 +97,9 @@ def validation(model, device, dataloader, epoch, type_dataset):
                         blosum62_dict,
                         idx_batch,
                         cc,
-                        monomer_labels,
-                        num_graphs,
-                        amino
+                        monomer_labels
             )
-            pred = pred.view(-1,)
+            
             
             # Calculate the loss:
             loss = loss_func(pred.double(), batch.y.double())  
@@ -160,7 +154,7 @@ def predict_test(model, dataloader, device, weights_file, threshold, type_datase
         for batch in dataloader:
             
             batch = batch.to(device)
-            x, edge_index,  edge_attr, idx_batch, cc, monomer_labels, num_graphs, amino = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels, batch.num_graphs, batch.aminoacids_features
+            x, edge_index,  edge_attr, idx_batch, cc, monomer_labels = batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.cc, batch.monomer_labels
             
             # Make a prediction:
             pred = model(
@@ -171,12 +165,9 @@ def predict_test(model, dataloader, device, weights_file, threshold, type_datase
                         blosum62_dict,
                         idx_batch,
                         cc,
-                        monomer_labels,
-                        num_graphs,
-                        amino
+                        monomer_labels
             )
             
-            pred = pred.view(-1,)
             pred_sigmoid = torch.sigmoid(pred) #to be able to round and saving in a csv file as prediction results
             
             x_all.extend([id_secuencias[cci.item()] for cci in batch.cc])

@@ -87,15 +87,6 @@ def sequences_geodata(cc, sequence, y, aminoacids_ft_dict, node_ft_dict, edge_ft
     
     return geo_dp, aminoacids_features, blosum62, sequence 
 
-    
-''' def label_representation(y, device):
-    if y >= 18.289912735: #This value is the mean of the RT from the SCX dataset
-        return torch.tensor(np.array([1]), dtype=torch.long, device=device)
-    elif y < 18.289912735:
-        return torch.tensor(np.array([0]), dtype=torch.long, device=device)
-    else:
-        raise ValueError("Invalid value for y. It should be a numeric value.")
- '''
 
 def label_representation(y, device):
     if y == 1:
