@@ -10,7 +10,7 @@ from src.aminoacids_features import get_aminoacid_features
 #-------------------------------------- Dataset 1--------------------------------------------------
 
 class GeoDataset_1(InMemoryDataset):
-    def __init__(self, root='../data', raw_name='datasets/%09_Xiao_training.csv', transform=None, pre_transform=None):
+    def __init__(self, root='../data', raw_name='dataset/%09_Xiao_training.csv', transform=None, pre_transform=None):
         self.filename = os.path.join(root, raw_name) 
         
         self.df = pd.read_csv(self.filename)
@@ -72,7 +72,7 @@ class GeoDataset_1(InMemoryDataset):
 #-------------------------------------- Dataset 2--------------------------------------------------
 
 class GeoDataset_2(InMemoryDataset):
-    def __init__(self, root='../data', raw_name='datasets/Xiao_validation.csv', transform=None, pre_transform=None):
+    def __init__(self, root='../data', raw_name='dataset/Xiao_validation.csv', transform=None, pre_transform=None):
         self.filename = os.path.join(root, raw_name) 
         
         self.df = pd.read_csv(self.filename)
@@ -133,7 +133,7 @@ class GeoDataset_2(InMemoryDataset):
 #-------------------------------------- Dataset 3--------------------------------------------------
 
 class GeoDataset_3(InMemoryDataset):
-    def __init__(self, root='../data', raw_name='datasets/Xiao_testing.csv', transform=None, pre_transform=None):
+    def __init__(self, root='../data', raw_name='dataset/Xiao_testing.csv', transform=None, pre_transform=None):
         self.filename = os.path.join(root, raw_name) 
         
         self.df = pd.read_csv(self.filename)
