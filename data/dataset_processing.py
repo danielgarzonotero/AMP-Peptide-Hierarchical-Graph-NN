@@ -61,9 +61,9 @@ def fasta_processing(path_amp, path_nonamp, path_saving):
 
     return
 
-path_amp = 'dataset Siu/Siu_test_amp.fasta'
-path_nonamp= 'dataset Siu/Siu_test_nonamp.fasta'
-path_saving= 'TESTING.csv'
+path_amp = 'datasets Xiao/Xiao_AMP_train.fasta'
+path_nonamp= 'datasets Xiao/Xiao_AMP_train.fasta'
+path_saving= 'Xiao_amp_nonamp.csv'
 fasta_processing(path_amp, path_nonamp, path_saving)
 
 # %% ///////////// csv to fasta //////////////////
