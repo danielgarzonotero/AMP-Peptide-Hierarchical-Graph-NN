@@ -386,7 +386,7 @@ for batch in train_dataloader:
                             monomer_labels=monomer_labels
                         )
     
-    path = 'IntegratedGradients_feature_importance.png'
+    path = 'results/IntegratedGradients_feature_importance.png'
     explanation.visualize_feature_importance(path, top_k = node_features_dim) 
     finish_time = time.time()
     time_prediction = (finish_time- start_time) / 60
