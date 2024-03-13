@@ -95,7 +95,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 3
+number_of_epochs = 100
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch, type_dataset='training')
@@ -392,3 +392,5 @@ for batch in train_dataloader:
     time_prediction = (finish_time- start_time) / 60
     print(time_prediction , 'min')
 
+
+# %%

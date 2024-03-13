@@ -1,40 +1,4 @@
-#%%
-''' from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
 
-#//////////// Filtering Datasets ///////////////////
-def filter_and_save(path_dataset, condition, output_csv):
-    df = pd.read_csv(path_dataset)
-
-    if condition == 'amp_validated':
-        condition_filter = ((df['Antibacterial'] == 1) & (df['is_validated'] == 'YES'))
-    elif condition == 'nonamp_validated':
-        condition_filter = ((df['Antibacterial'] == 0) & (df['is_validated'] == 'YES'))
-    elif condition == 'amp_novalidated':
-        condition_filter = ((df['Antibacterial'] == 1) & (df['is_validated'] == 'NO'))
-    elif condition == 'nonamp_novalidated':
-        condition_filter = ((df['Antibacterial'] == 0) & (df['is_validated'] == 'NO'))
-    elif condition == 'all_amp':
-        condition_filter = (df['Antibacterial'] == 1)
-    elif condition == 'all_nonamp':
-        condition_filter = (df['Antibacterial'] == 0)
-
-    filtered_df = df[condition_filter].copy()
-
-    # Select only the 'sequence' and 'antibacterial' columns
-    selected_columns = ['Sequence', 'Antibacterial']
-    filtered_df = filtered_df[selected_columns]
-
-    # Save the filtered DataFrame to a new CSV file
-    filtered_df.to_csv(output_csv, index=False)
-
-# Example usage:
-filter_and_save('multiAMP_test.csv', 'all_nonamp', 'Ching_nonAMP_test.csv')
- '''
 
 # %%
 from rdkit import Chem

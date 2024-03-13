@@ -10,7 +10,7 @@ from src.aminoacids_features import get_aminoacid_features
 #-------------------------------------- Dataset 1--------------------------------------------------
 
 class GeoDataset_1(InMemoryDataset):
-    def __init__(self, root='../data', raw_name='dataset/%09_Xiao_training.csv', transform=None, pre_transform=None):
+    def __init__(self, root='../data', raw_name='dataset/Chung_Xiao_balanced_all_training.csv', transform=None, pre_transform=None):
         self.filename = os.path.join(root, raw_name) 
         
         self.df = pd.read_csv(self.filename)
@@ -38,7 +38,7 @@ class GeoDataset_1(InMemoryDataset):
         sequences_dict = {}
         
         
-        aminoacids_ft_dict = get_aminoacid_features(self.x)
+        aminoacids_ft_dict = get_aminoacid_features()
         
         for i, (x, y) in enumerate(zip(self.x, self.y)):
             device_info_instance = device_info()
@@ -72,7 +72,7 @@ class GeoDataset_1(InMemoryDataset):
 #-------------------------------------- Dataset 2--------------------------------------------------
 
 class GeoDataset_2(InMemoryDataset):
-    def __init__(self, root='../data', raw_name='dataset/Xiao_validation.csv', transform=None, pre_transform=None):
+    def __init__(self, root='../data', raw_name='dataset/Chung_Xiao_balanced_all_validation.csv', transform=None, pre_transform=None):
         self.filename = os.path.join(root, raw_name) 
         
         self.df = pd.read_csv(self.filename)
@@ -99,7 +99,7 @@ class GeoDataset_2(InMemoryDataset):
         blosum62_dict = {}
         sequences_dict = {}
         
-        aminoacids_ft_dict = get_aminoacid_features()
+        aminoacids_ft_dict = get_aminoacid_features(self.x)
         
         for i, (x, y) in enumerate(zip(self.x, self.y)):
             device_info_instance = device_info()
@@ -133,7 +133,7 @@ class GeoDataset_2(InMemoryDataset):
 #-------------------------------------- Dataset 3--------------------------------------------------
 
 class GeoDataset_3(InMemoryDataset):
-    def __init__(self, root='../data', raw_name='dataset/Xiao_testing.csv', transform=None, pre_transform=None):
+    def __init__(self, root='../data', raw_name='dataset/Chung_Xiao_balanced_all_testing.csv', transform=None, pre_transform=None):
         self.filename = os.path.join(root, raw_name) 
         
         self.df = pd.read_csv(self.filename)
