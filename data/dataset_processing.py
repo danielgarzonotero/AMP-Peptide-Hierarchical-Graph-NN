@@ -44,9 +44,9 @@ def fasta_processing(path_amp, path_nonamp, path_saving):
     
     #Checking:
     filas, columnas = df_amp.shape
-    print(f"-amp dataset has {filas} rows and {columnas} columns.")
+    print(f"\n-amp dataset has {filas} rows and {columnas} columns.")
     filas, columnas = df_nonamp.shape
-    print(f"\n-nonamp dataset has {filas} rows and {columnas} columns.")
+    print(f"-nonamp dataset has {filas} rows and {columnas} columns.")
     
     df_combined = pd.concat([df_amp, df_nonamp], ignore_index=True)
 
@@ -55,15 +55,25 @@ def fasta_processing(path_amp, path_nonamp, path_saving):
     
     df_shuffled = df_combined.sample(frac=1, random_state=1).reset_index(drop=True)
     filas, columnas = df_shuffled .shape
-    print(f"\n-The datasets combined have {filas} rows and {columnas} columns.")
+    print(f"-The datasets combined have {filas} rows and {columnas} columns.")
     
     df_shuffled.to_csv(path_saving, index=False, quoting=None)
 
     return
 
-path_amp = 'datasets Xiao/Xiao_AMP_train.fasta'
-path_nonamp= 'datasets Xiao/Xiao_AMP_train.fasta'
-path_saving= 'Xiao_amp_nonamp.csv'
+path_amp = 'dataset_Chung/fasta/Chung_1593_all_training_c09n3g2.fasta'
+path_nonamp= 'datasets_Xiao/Xiao_nonAMP_train.fasta'
+path_saving= 'Chung_Xiao_balanced_all_training.csv'
+fasta_processing(path_amp, path_nonamp, path_saving)
+
+path_amp = 'dataset_Chung/fasta/Chung_454_all_validation_c09n3g2.fasta'
+path_nonamp= 'datasets_Xiao/Xiao_nonAMP_validation.fasta'
+path_saving= 'Chung_Xiao_balanced_all_validation.csv'
+fasta_processing(path_amp, path_nonamp, path_saving)
+
+path_amp = 'dataset_Chung/fasta/Chung_226_all_test_c09n3g2.fasta'
+path_nonamp= 'datasets_Xiao/Xiao_nonAMP_test.fasta'
+path_saving= 'Chung_Xiao_balanced_all_testing.csv'
 fasta_processing(path_amp, path_nonamp, path_saving)
 
 # %% ///////////// csv to fasta //////////////////
