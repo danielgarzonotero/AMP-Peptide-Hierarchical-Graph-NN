@@ -7,4 +7,4 @@ data/processed/*.pt
 best_model_weights.pth
 
 # Ignorar archivos de caché de Python
-src/__pycache__/*.pyc
+src/__pycache__/*

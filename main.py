@@ -152,7 +152,7 @@ prediction_train_set = {
                         }
 
 df = pd.DataFrame(prediction_train_set)
-df.to_excel('results/training_set_prediction.xlsx', index=False)
+df.to_excel('results/training_prediction.xlsx', index=False)
 
 # Evaluation metrics:
 
@@ -176,7 +176,7 @@ prediction_validation_set = {
                             }
 
 df = pd.DataFrame(prediction_validation_set)
-df.to_excel('results/validation_set_prediction.xlsx', index=False)
+df.to_excel('results/validation_prediction.xlsx', index=False)
 
 
 # Evaluation metrics:
@@ -205,7 +205,7 @@ prediction_test_set = {
                         }
 
 df = pd.DataFrame(prediction_test_set)
-df.to_excel('results/test_set_prediction.xlsx', index=False)
+df.to_excel('results/testing_prediction.xlsx', index=False)
 
 # Evaluation metrics:
 
@@ -390,7 +390,7 @@ for batch in train_dataloader:
     explanation.visualize_feature_importance(path, top_k = node_features_dim) 
     finish_time = time.time()
     time_prediction = (finish_time- start_time) / 60
-    print(time_prediction , 'min')
+    print('\nTime Feature Importance:',time_prediction , 'min')
 
 
 # %%
