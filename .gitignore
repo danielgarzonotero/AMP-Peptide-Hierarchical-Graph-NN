@@ -1,10 +1,15 @@
 
 # Ignorar archivos de diccionarios y procesados
-data/dataset/dictionaries/*.pt
-data/processed/*.pt
+data/dataset/dictionaries/training/*
+data/dataset/dictionaries/validation/*
+data/dataset/dictionaries/testing/*
+
+data/Xiao_training_processed/processed/*
+data/Xiao_validation_processed/processed/*
+data/Xiao_testing_processed/processed/*
 
 # Ignorar el archivo de pesos del mejor modelo
-best_model_weights.pth
+weights/best_model_weights.pth
 
 # Ignorar archivos de caché de Python
 src/__pycache__/*
