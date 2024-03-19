@@ -10,7 +10,7 @@ from src.aminoacids_features import get_aminoacid_features
 #-------------------------------------- Dataset 1--------------------------------------------------
 
 class GeoDataset_1(InMemoryDataset):
-    def __init__(self, root='../data', raw_name='dataset/Xiao_training.csv', transform=None, pre_transform=None):
+    def __init__(self, root='../data', raw_name='dataset/1_Xiao_training.csv', transform=None, pre_transform=None):
         self.filename = os.path.join(root, raw_name) 
         
         self.df = pd.read_csv(self.filename)
@@ -29,6 +29,7 @@ class GeoDataset_1(InMemoryDataset):
 
     def process(self):
         node_ft_dict, edge_ft_dict = get_features(self.x)
+        aminoacids_ft_dict = get_aminoacid_features()
 
         data_list = []
         
@@ -38,7 +39,7 @@ class GeoDataset_1(InMemoryDataset):
         sequences_dict = {}
         
         
-        aminoacids_ft_dict = get_aminoacid_features()
+        
         
         for i, (x, y) in enumerate(zip(self.x, self.y)):
             device_info_instance = device_info()
@@ -91,6 +92,7 @@ class GeoDataset_2(InMemoryDataset):
 
     def process(self):
         node_ft_dict, edge_ft_dict = get_features(self.x)
+        aminoacids_ft_dict = get_aminoacid_features()
 
         data_list = []
         
@@ -99,7 +101,6 @@ class GeoDataset_2(InMemoryDataset):
         blosum62_dict = {}
         sequences_dict = {}
         
-        aminoacids_ft_dict = get_aminoacid_features(self.x)
         
         for i, (x, y) in enumerate(zip(self.x, self.y)):
             device_info_instance = device_info()
@@ -152,6 +153,7 @@ class GeoDataset_3(InMemoryDataset):
 
     def process(self):
         node_ft_dict, edge_ft_dict = get_features(self.x)
+        aminoacids_ft_dict = get_aminoacid_features()
 
         data_list = []
         
@@ -160,7 +162,6 @@ class GeoDataset_3(InMemoryDataset):
         blosum62_dict = {}
         sequences_dict = {}
         
-        aminoacids_ft_dict = get_aminoacid_features()
         
         for i, (x, y) in enumerate(zip(self.x, self.y)):
             device_info_instance = device_info()
