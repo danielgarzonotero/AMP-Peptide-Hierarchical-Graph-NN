@@ -1,5 +1,10 @@
 
+# Ignorar archivos de diccionarios y procesados
 data/dictionaries/*.pt
 data/processed/*.pt
+
+# Ignorar el archivo de pesos del mejor modelo
 best_model_weights.pth
+
+# Ignorar archivos de caché de Python
 src/__pycache__/*.pyc
