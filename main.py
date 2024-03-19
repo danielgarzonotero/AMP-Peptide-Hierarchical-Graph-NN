@@ -359,8 +359,8 @@ explainer = Explainer(
 
 
 # Generar explicaciones para cada nodo en cada lote del DataLoader
-aminoacids_features_dict = torch.load('data/dictionaries/training/aminoacids_features_dict.pt', map_location=device)
-blosum62_dict = torch.load('data/dictionaries/training/blosum62_dict.pt', map_location=device)
+aminoacids_features_dict = torch.load('data/dataset/dictionaries/training/aminoacids_features_dict.pt', map_location=device)
+blosum62_dict = torch.load('data//dataset/dictionaries/training/blosum62_dict.pt', map_location=device)
 
 batch_size = len(training_datataset.data.cc)
 train_dataloader = DataLoader(training_datataset, batch_size, shuffle=True)

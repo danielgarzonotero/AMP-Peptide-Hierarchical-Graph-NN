@@ -56,7 +56,7 @@ class GeoDataset_1(InMemoryDataset):
         torch.save((data, slices), self.processed_paths[0])
         
         # Ruta completa al directorio que deseas crear
-        dictionaries_path = 'data/dictionaries/training'
+        dictionaries_path = 'data/dataset/dictionaries/training'
 
         # rutas relativas para los diccionarios
         aminoacids_features_dict_path = os.path.join(dictionaries_path, 'aminoacids_features_dict.pt')
@@ -117,7 +117,7 @@ class GeoDataset_2(InMemoryDataset):
         torch.save((data, slices), self.processed_paths[0])
         
         # Ruta completa al directorio que deseas crear
-        dictionaries_path = 'data/dictionaries/validation'
+        dictionaries_path = 'data/dataset/dictionaries/validation'
 
         # rutas relativas para los diccionarios
         aminoacids_features_dict_path = os.path.join(dictionaries_path, 'aminoacids_features_dict.pt')
@@ -178,7 +178,7 @@ class GeoDataset_3(InMemoryDataset):
         torch.save((data, slices), self.processed_paths[0])
         
         # Ruta completa al directorio que deseas crear
-        dictionaries_path = 'data/dictionaries/testing'
+        dictionaries_path = 'data/dataset/dictionaries/testing'
 
         # rutas relativas para los diccionarios
         aminoacids_features_dict_path = os.path.join(dictionaries_path, 'aminoacids_features_dict.pt')

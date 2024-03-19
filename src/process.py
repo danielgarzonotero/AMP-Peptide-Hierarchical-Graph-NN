@@ -194,6 +194,6 @@ def custom_round(pred, threshold):
 
 
 def importar_dicionario(type_dataset, type_dictionario):
-    return torch.load('data/dictionaries/{}/{}_dict.pt'.format(type_dataset, type_dictionario))
+    return torch.load('data/dataset/dictionaries/{}/{}_dict.pt'.format(type_dataset, type_dictionario))
 
 
