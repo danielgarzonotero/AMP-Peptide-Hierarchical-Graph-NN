@@ -4,12 +4,14 @@ data/dataset/dictionaries/training/*
 data/dataset/dictionaries/validation/*
 data/dataset/dictionaries/testing/*
 
-data/Xiao_training_processed/processed/*
-data/Xiao_validation_processed/processed/*
-data/Xiao_testing_processed/processed/*
+data/dataset/Xiao_training_processed/processed/*
+data/dataset/Xiao_validation_processed/processed/*
+data/dataset/Xiao_testing_processed/processed/*.pt
 
 # Ignorar el archivo de pesos del mejor modelo
 weights/best_model_weights.pth
 
 # Ignorar archivos de caché de Python
 src/__pycache__/*
+
+data/dataset/Xiao_testing_processed/processed/*.pt
