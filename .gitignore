@@ -1,6 +1,6 @@
 
 # Ignorar archivos de diccionarios y procesados
-data/dictionaries/*.pt
+data/dataset/dictionaries/*.pt
 data/processed/*.pt
 
 # Ignorar el archivo de pesos del mejor modelo
