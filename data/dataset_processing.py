@@ -235,3 +235,29 @@ print(f"El DataFrame tiene {filas} filas y {columnas} columnas.")
 # Guarda el nuevo conjunto de datos en un nuevo archivo CSV
 result_df.to_csv('Jing_all_amp_nonamp_duplicated_removed.csv', index=False)  # Reemplaza 'nuevo_dataset.csv' con el nombre que desees para el nuevo archivo
 
+#%%
+import pandas as pd
+
+# Lee el archivo CSV con los títulos de las columnas especificados
+df = pd.read_csv("/home/vvd9fd/Documents/Bilodeau Group/Codes/0.Research/AMP-Peptide-Hierarchical-Graph-NN/data/dataset Chung/multiAMP_train.csv", usecols=["Antibacterial","MammalianCells","Antifungal","Antiviral","Anticancer","Antiparasitic"])
+
+# Obtén el número total de filas en el DataFrame
+total_filas = len(df)
+
+# Suma las filas de cada columna
+sum_columnas = df.sum()
+
+# Contar cuántos valores son iguales a 1 en cada columna
+conteo_unos = (df == 1).sum()
+
+# Imprimir los resultados en el formato especificado
+for columna, suma, conteo in zip(df.columns, sum_columnas, conteo_unos):
+    porcentaje = (conteo / total_filas) * 100  # Calcula el porcentaje
+    print(f'{columna}: {conteo} ({porcentaje:.3f}%)')
+    
+print('Total de sequencias', total_filas)
+
+
+
+
+# %%

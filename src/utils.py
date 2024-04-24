@@ -12,7 +12,6 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from Bio.Align import substitution_matrices
 
 
-
 def sequences_geodata(cc, sequence, y, aminoacids_ft_dict, node_ft_dict, edge_ft_dict, device):
     
     #Atoms
@@ -67,38 +66,26 @@ def sequences_geodata(cc, sequence, y, aminoacids_ft_dict, node_ft_dict, edge_ft
                                 for wt, aromaticity, hydrophobicity, net_charge, p_iso, logp, atoms
                                 in zip(wt_amino, aromaticity_amino, hydrophobicity_amino, net_charge_amino, p_iso_amino, logp_amino, atoms_amino)]
 
+    aminoacids_features = (cc,torch.tensor(np.array([aminoacids_features_dict[x] for x in aminoacids_keys_features]), dtype=torch.float32, device = device))
+    blosum62 = (cc, torch.tensor(np.array([construir_matriz_caracteristicas(sequence)]), dtype =torch.float32, device = device))
+
+    y = torch.tensor(np.array([y]), dtype=torch.float32, device=device)
     
-    aminoacids_features = torch.tensor(np.array([aminoacids_features_dict[x] for x in aminoacids_keys_features]), dtype=torch.float32, device = device)
-
-    #BLOSUM62 feature matrix
-    blosum62 = torch.tensor(np.array(construir_matriz_caracteristicas(sequence)), dtype =torch.float32, device = device)
-
-    y = label_representation(y, device)
-
+    
     geo_dp = Data(x=nodes_features,
-                  y=y,
-                  edge_index=graph_edges, 
-                  edge_attr=edges_features, 
-                  monomer_labels=labels_aminoacid_atoms,
-                  aminoacids_features=aminoacids_features,
-                  blosumn=blosum62,
-                  cc = cc,
-                  )
+                y=y,
+                edge_index=graph_edges, 
+                edge_attr=edges_features, 
+                monomer_labels=labels_aminoacid_atoms,
+                aminoacids_features=aminoacids_features , 
+                blosumn=blosum62,
+                cc=cc,
+                sequence = sequence
+                )
     
-    return geo_dp, aminoacids_features, blosum62, sequence 
+    return geo_dp
 
 
-def label_representation(y, device):
-    if y == 1:
-        
-        return torch.tensor(np.array([1]), dtype=torch.long, device=device)
-    elif y == 0:
-        return torch.tensor(np.array([0]), dtype=torch.long, device=device)
-    else:
-        raise ValueError("Invalid value for y. It should be either 0 or 1.")
-
-    
-    
     
 #/////////////////// Atomic Features //////////////////////////////////////
 

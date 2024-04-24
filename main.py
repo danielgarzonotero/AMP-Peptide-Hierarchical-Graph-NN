@@ -8,7 +8,7 @@ from torch_geometric.explain import CaptumExplainer, Explainer
 
 import pandas as pd
 from src.device import device_info
-from src.data import GeoDataset_1, GeoDataset_2,  GeoDataset_3
+from src.data import GeoDataset
 from src.model import GCN_Geo
 from src.process import train, validation, predict_test
 from src.evaluation_metrics import evaluate_model
@@ -23,9 +23,9 @@ start_time = time.time()
 
 # Build starting dataset: 
 datasets = {
-            'training_dataset': GeoDataset_1(root='data'),
-            'validation_dataset': GeoDataset_2(root='data'),
-            'testing_dataset': GeoDataset_3(root='data'),
+            'training_dataset': GeoDataset(raw_name='data/dataset/Xiao_training.csv'),
+            'validation_dataset': GeoDataset(raw_name='data/dataset/Xiao_validation.csv'),
+            'testing_dataset': GeoDataset(raw_name='data/dataset/Xiao_testing.csv')
             }
 
 
@@ -58,7 +58,7 @@ edge_dim_feature = training_datataset.num_edge_features
 hidden_dim_nn_1 = 20
 hidden_dim_nn_2 = 10
 
-hidden_dim_gat_0 = 15
+hidden_dim_gat_0 = 10
 
 hidden_dim_fcn_1 = 10
 hidden_dim_fcn_2 = 5
@@ -76,13 +76,13 @@ model = GCN_Geo(
                 hidden_dim_fcn_1,
                 hidden_dim_fcn_2,
                 hidden_dim_fcn_3,
-            ).to(device)
+                ).to(device)
 
 
 
 #/////////////////// Training /////////////////////////////
 # Set up optimizer:
-learning_rate = 1E-3 
+learning_rate = 1E-4 
 weight_decay = 1E-5 
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 # Definir el scheduler ReduceLROnPlateau
@@ -95,7 +95,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 100
+number_of_epochs = 1
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch, type_dataset='training')
@@ -142,13 +142,15 @@ threshold = 0.5
 # ------------------------------------////////// Training set /////////////---------------------------------------------------
 
 
-training_input, training_target, training_pred, training_pred_csv = predict_test(model, train_dataloader, device, weights_file, threshold, type_dataset='training')
+training_input, training_target, training_pred, training_pred_csv, trainig_scores = predict_test(model, train_dataloader, device, weights_file, threshold, type_dataset='training')
 
 #Saving a CSV file with prediction values
 prediction_train_set = {
                         'Sequence':training_input,
-                        'Target': training_target.cpu().numpy(),
+                        'Target': training_target.cpu().numpy().T.flatten().tolist(),
+                        'Scores' : trainig_scores,
                         'Prediction':  training_pred_csv
+                        
                         }
 
 df = pd.DataFrame(prediction_train_set)
@@ -166,12 +168,13 @@ evaluate_model(prediction=training_pred,
 
 
 #-------------------------------------------- ////////// Validation Set //////////-------------------------------------------------
-validation_input, validation_target, validation_pred, validation_pred_csv = predict_test(model, val_dataloader, device, weights_file, threshold, type_dataset='validation')
+validation_input, validation_target, validation_pred, validation_pred_csv, validation_scores = predict_test(model, val_dataloader, device, weights_file, threshold, type_dataset='validation')
 
 #Saving a CSV file with prediction values
 prediction_validation_set = {
                             'Sequence':validation_input,
-                            'Target': validation_target.cpu().numpy(),
+                            'Target': validation_target.cpu().numpy().T.flatten().tolist(),
+                            'Scores' : validation_scores,
                             'Prediction':  validation_pred_csv
                             }
 
@@ -192,7 +195,7 @@ evaluate_model(prediction = validation_pred,
 # --------------------------------------------////////// Test Set //////////---------------------------------------------------
 start_time_testing = time.time()
 
-test_input, test_target, test_pred, test_pred_csv = predict_test(model, test_dataloader, device, weights_file,threshold, type_dataset='testing')
+test_input, test_target, test_pred, test_pred_csv, testing_scores = predict_test(model, test_dataloader, device, weights_file,threshold, type_dataset='testing')
 
 finish_time_testing = time.time()
 time_prediction = (finish_time_testing- start_time_testing) / 60
@@ -200,7 +203,8 @@ time_prediction = (finish_time_testing- start_time_testing) / 60
 #Saving a CSV file with prediction values
 prediction_test_set = {
                         'Sequence':test_input,
-                        'Target': test_target.cpu().numpy(),
+                        'Target': test_target.cpu().numpy().T.flatten().tolist(),
+                        'Scores' : testing_scores,
                         'Prediction': test_pred_csv
                         }
 
@@ -338,9 +342,10 @@ data = {
 df = pd.DataFrame(data)
 df.to_csv('results/results_training_validation_test.csv', index=False)
 
+print('/////////////// Ready ////////////////////')
 #-------------------------------------///////// Explainer ////// -------------------------------------------
 
-explainer = Explainer(
+''' explainer = Explainer(
                     model=model,
                     algorithm=CaptumExplainer('IntegratedGradients'),
                     explanation_type='model', #Explains the model prediction.
@@ -391,6 +396,6 @@ for batch in train_dataloader:
     finish_time = time.time()
     time_prediction = (finish_time- start_time) / 60
     print('\nTime Feature Importance:',time_prediction , 'min')
-
+ '''
 
 # %%
