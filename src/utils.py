@@ -103,6 +103,7 @@ def peptide_to_helm(peptide, polymer_id):
     
     return sequence_helm
 
+
 def get_features(sequence_list):
     
     peptides_list_helm = []
@@ -364,7 +365,7 @@ def get_aminoacids(sequence):
     
     return aminoacids_list
 
-#Returns tmolecule from an aminoacid
+#Returns molecule from an aminoacid
 def get_molecule(amino):
     polymer_id = "PEPTIDE1" 
     helm_notation = peptide_to_helm(amino, polymer_id)

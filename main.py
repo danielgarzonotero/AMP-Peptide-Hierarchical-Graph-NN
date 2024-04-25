@@ -23,9 +23,9 @@ start_time = time.time()
 
 # Build starting dataset: 
 datasets = {
-            'training_dataset': GeoDataset(raw_name='data/dataset/Xiao_training.csv'),
-            'validation_dataset': GeoDataset(raw_name='data/dataset/Xiao_validation.csv'),
-            'testing_dataset': GeoDataset(raw_name='data/dataset/Xiao_testing.csv')
+            'training_dataset': GeoDataset(raw_name='data/Chung_Xiao_train_AB_6153.csv'),
+            'validation_dataset': GeoDataset(raw_name='data/Chung_Xiao_val_AB_1640.csv'),
+            'testing_dataset': GeoDataset(raw_name='data/Chung_Xiao_test_AB_410.csv')
             }
 
 
@@ -95,7 +95,7 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 200
+number_of_epochs = 500
 
 for epoch in range(1, number_of_epochs+1):
     train_loss = train(model, device, train_dataloader, optimizer, epoch, type_dataset='training')
