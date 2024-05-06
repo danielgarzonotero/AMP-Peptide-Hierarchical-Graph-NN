@@ -42,7 +42,7 @@ model = GCN_Geo(
                 hidden_dim_fcn_3,
                 ).to(device)
 
-weights_file="weights/best_model_weights_Xiao.pth"
+weights_file="weights/best_model_weights_p_Chung_n_Chung_Xiao_epochs500_batch200.pth"
 
 # Ejecutar la función de predicción en el conjunto de datos de prueba utilizando el modelo cargado
 indep_testing_input, indep_testing_target, indep_testing_pred, indep_testing_pred_csv, indep_testing_scores = predict_test(model, indep_testing_dataloader, device, weights_file, threshold, type_dataset='testing')

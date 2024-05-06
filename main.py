@@ -40,7 +40,7 @@ finish_time_preprocessing = time.time()
 time_preprocessing = (finish_time_preprocessing - start_time) / 60 
 
 # Define dataloaders para conjuntos de entrenamiento, validación y prueba:
-batch_size = 100  
+batch_size = 200  
 train_dataloader = DataLoader(training_datataset, batch_size, shuffle=True)
 val_dataloader = DataLoader(validation_datataset , batch_size, shuffle=True)
 test_dataloader = DataLoader(testing_datataset, batch_size, shuffle=True)
