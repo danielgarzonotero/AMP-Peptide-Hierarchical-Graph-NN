@@ -108,7 +108,7 @@ class GCN_Geo(torch.nn.Module):
         p = self.dropout(p) 
         p = self.linear4(p)
         
-        return p
+        return p.view(-1)
 
     
 device_info_instance = device_info()

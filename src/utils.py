@@ -12,7 +12,7 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from Bio.Align import substitution_matrices
 
 
-def sequences_geodata(cc, sequence, y, aminoacids_ft_dict, node_ft_dict, edge_ft_dict, device):
+def sequences_geodata_1(cc, sequence, y, aminoacids_ft_dict, node_ft_dict, edge_ft_dict, device):
     
     #Atoms
     polymer_id = "PEPTIDE1" 
@@ -51,7 +51,7 @@ def sequences_geodata(cc, sequence, y, aminoacids_ft_dict, node_ft_dict, edge_ft
     
     #amino acid feature:
     aminoacids_features_dict = aminoacids_ft_dict
-    aminoacids =get_aminoacids(sequence)
+    aminoacids =get_aminoacids_2(sequence)
     aminoacids_mol = [get_molecule(amino) for amino in aminoacids]
     aminoacids_biopython = [ProteinAnalysis(amino) for amino in aminoacids]
     wt_amino=[round(Descriptors.MolWt(amino), 4) for amino in aminoacids_mol]
@@ -74,6 +74,77 @@ def sequences_geodata(cc, sequence, y, aminoacids_ft_dict, node_ft_dict, edge_ft
     
     geo_dp = Data(x=nodes_features,
                 y=y,
+                edge_index=graph_edges, 
+                edge_attr=edges_features, 
+                monomer_labels=labels_aminoacid_atoms,
+                aminoacids_features=aminoacids_features , 
+                blosumn=blosum62,
+                cc=cc,
+                sequence = sequence
+                )
+    
+    return geo_dp
+
+#---------------------------------- For independet sets with out targets values ---------------------------------------
+def sequences_geodata_2(cc, sequence, aminoacids_ft_dict, node_ft_dict, edge_ft_dict, device):
+    
+    #Atoms
+    polymer_id = "PEPTIDE1" 
+    helm_notation = peptide_to_helm(sequence, polymer_id)
+    molecule = Chem.MolFromHELM(helm_notation)
+    
+    atomic_number = [atom.GetAtomicNum() for atom in molecule.GetAtoms()]
+    aromaticity = [int(atom.GetIsAromatic()) for atom in molecule.GetAtoms()]
+    num_bonds = [atom.GetDegree() for atom in molecule.GetAtoms()]
+    bonded_hydrogens = [atom.GetTotalNumHs() for atom in molecule.GetAtoms()]
+    hybridization = [atom.GetHybridization().real for atom in molecule.GetAtoms()]
+    implicit_valence = [atom.GetImplicitValence () for atom in molecule.GetAtoms()]
+    
+    node_keys_features = [f"{atomic}_{aromatic}_{bonds}_{hydrogen}_{hybrid}_{impli_vale}" 
+                        for atomic, aromatic, bonds, hydrogen, hybrid, impli_vale
+                        in zip(atomic_number, aromaticity, num_bonds, bonded_hydrogens, hybridization, implicit_valence )]
+    
+    edge_key_features = []
+    for bond in molecule.GetBonds():
+        bond_type = bond.GetBondTypeAsDouble()
+        in_ring = int(bond.IsInRing())
+        conjugated = int(bond.GetIsConjugated())
+        bond_aromatic = int(bond.GetIsAromatic())
+        valence_contribution_i = int(bond.GetValenceContrib(bond.GetBeginAtom()))
+        valence_contribution_f = int(bond.GetValenceContrib(bond.GetEndAtom()))
+        
+        edge_key_features.append(f"{bond_type:.1f}_{in_ring:.1f}_{conjugated:.1f}_{bond_aromatic:.1f}_{valence_contribution_i:.1f}_{valence_contribution_f:.1f}") 
+    
+    nodes_features = torch.tensor(np.array([node_ft_dict[x] for x in node_keys_features]), dtype=torch.float32)
+    edges_features = torch.tensor(np.array([edge_ft_dict[x] for x in edge_key_features]), dtype=torch.float32)  
+    graph_edges = get_edge_indices(molecule)[0]
+    
+    edges_peptidic = get_edge_indices(molecule)[1]
+    edges_nonpeptidic = get_non_peptide_idx(molecule)
+    labels_aminoacid_atoms = get_label_aminoacid_atoms(edges_peptidic, edges_nonpeptidic, molecule)
+    
+    #amino acid feature:
+    aminoacids_features_dict = aminoacids_ft_dict
+    aminoacids =get_aminoacids_2(sequence)
+    aminoacids_mol = [get_molecule(amino) for amino in aminoacids]
+    aminoacids_biopython = [ProteinAnalysis(amino) for amino in aminoacids]
+    wt_amino=[round(Descriptors.MolWt(amino), 4) for amino in aminoacids_mol]
+    aromaticity_amino=[round(amino.aromaticity(), 4) for amino in aminoacids_biopython]
+    hydrophobicity_amino=[round(amino.gravy(), 4) for amino in aminoacids_biopython]
+    net_charge_amino=[round(amino.charge_at_pH(7), 4) for amino in aminoacids_biopython]
+    p_iso_amino=[round(amino.isoelectric_point(), 4) for amino in aminoacids_biopython]
+    logp_amino=[round(Crippen.MolLogP(amino), 4) for amino in aminoacids_mol]
+    atoms_amino=[round(float(amino.GetNumAtoms()), 4) for amino in aminoacids_mol]
+
+    aminoacids_keys_features = [f"{wt}_{aromaticity}_{hydrophobicity}_{net_charge}_{p_iso}_{logp}_{atoms}"
+                                for wt, aromaticity, hydrophobicity, net_charge, p_iso, logp, atoms
+                                in zip(wt_amino, aromaticity_amino, hydrophobicity_amino, net_charge_amino, p_iso_amino, logp_amino, atoms_amino)]
+
+    aminoacids_features = (cc,torch.tensor(np.array([aminoacids_features_dict[x] for x in aminoacids_keys_features]), dtype=torch.float32, device = device))
+    blosum62 = (cc, torch.tensor(np.array([construir_matriz_caracteristicas(sequence)]), dtype =torch.float32, device = device))
+
+
+    geo_dp = Data(x=nodes_features,
                 edge_index=graph_edges, 
                 edge_attr=edges_features, 
                 monomer_labels=labels_aminoacid_atoms,
@@ -364,6 +435,21 @@ def get_aminoacids(sequence):
         aminoacids_list.extend(split_sequence_for_Helm(sequence))
     
     return aminoacids_list
+
+def get_aminoacids_2(peptide):
+    sequence = peptide.replace("(ac)", "[ac]*").replace("_", "").replace("1", "").replace("2", "").replace("3", "").replace("4", "")
+    sequence_helm = "".join(sequence)
+    
+    sequence_helm = ''.join([c + '.' if c.isupper() else c for c in sequence_helm])
+    sequence_helm = sequence_helm.rstrip('.')
+    
+    # Crear una lista a partir de la cadena resultante separada por puntos
+    sequence_list = sequence_helm.split('.')
+    
+    # Reemplazar "_" por "." en cada elemento de la lista
+    sequence_list = [elem.replace('*', '.') for elem in sequence_list]
+    
+    return sequence_list
 
 #Returns molecule from an aminoacid
 def get_molecule(amino):

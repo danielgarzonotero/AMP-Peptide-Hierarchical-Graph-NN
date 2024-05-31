@@ -8,7 +8,7 @@ from torch_geometric.explain import CaptumExplainer, Explainer
 
 import pandas as pd
 from src.device import device_info
-from src.data import GeoDataset
+from src.data import GeoDataset_1
 from src.model import GCN_Geo
 from src.process import train, validation, predict_test
 from src.evaluation_metrics import evaluate_model
@@ -23,15 +23,69 @@ start_time = time.time()
 
 # Build starting dataset: 
 datasets = {
-            'training_dataset': GeoDataset(raw_name='data/Chung_Xiao_train_AB_6153.csv'),
-            'validation_dataset': GeoDataset(raw_name='data/Chung_Xiao_val_AB_1640.csv'),
-            'testing_dataset': GeoDataset(raw_name='data/Chung_Xiao_test_AB_410.csv')
+            'training_dataset': GeoDataset_1(raw_name='data/Chung_Xiao_train_AB_6153.csv',
+                                            root='',
+                                            index_x=0,
+                                            index_y_start=1,
+                                            ),
+            'validation_dataset': GeoDataset_1(raw_name='data/Chung_Xiao_val_AB_1640.csv',
+                                                root='',
+                                                index_x=0,
+                                                index_y_start=1
+                                            ),
+            'testing_dataset': GeoDataset_1(raw_name='data/Chung_Xiao_test_AB_410.csv',
+                                            root='',
+                                            index_x=0,
+                                            index_y_start=1
+                                            ),
+            'fold_1': GeoDataset_1(raw_name='data/dataset Ruiz/Fold1_clean.csv',
+                                            root='',
+                                            index_x=0,
+                                            index_y_start=2,
+                                            ),
+            'fold_2': GeoDataset_1(raw_name='data/dataset Ruiz/Fold2_clean.csv',
+                                            root='',
+                                            index_x=0,
+                                            index_y_start=2
+                                            ),
+            'fold_3': GeoDataset_1(raw_name='data/dataset Ruiz/Fold3_clean.csv',
+                                            root='',
+                                            index_x=0,
+                                            index_y_start=2
+                                            ),
+            'fold_4': GeoDataset_1(raw_name='data/dataset Ruiz/Fold4_clean.csv',
+                                            root='',
+                                            index_x=0,
+                                            index_y_start=2
+                                            ),
+            'test_ruiz': GeoDataset_1(raw_name='data/dataset Ruiz/Test_clean.csv',
+                                            root='',
+                                            index_x=0,
+                                            index_y_start=1
+                                            ),
+            'train_ruiz': GeoDataset_1(raw_name='data/dataset Ruiz/Train_clean.csv',
+                                            root='',
+                                            index_x=0,
+                                            index_y_start=1
+                                            )
             }
 
 
 training_datataset = datasets['training_dataset']
 validation_datataset = datasets['validation_dataset']
 testing_datataset = datasets['testing_dataset']
+
+ruiz_training_datataset = datasets['train_ruiz']
+ruiz_testing_datataset = datasets['test_ruiz']
+
+#  Number of datapoints in each dataset:
+#Pretraining
+size_training_dataset = 0.8
+size_validation_dataset = 1-size_training_dataset
+n_training = int(len(ruiz_training_datataset ) * size_training_dataset)
+n_validation = len(ruiz_training_datataset ) - n_training
+
+ruiz_training_set, ruiz_validation_set = torch.utils.data.random_split(ruiz_training_datataset  , [n_training, n_validation], generator=torch.Generator().manual_seed(24))
 
 print('Number of NODES features: ', training_datataset.num_features)
 print('Number of EDGES features: ', training_datataset.num_edge_features)
@@ -44,6 +98,11 @@ batch_size = 200
 train_dataloader = DataLoader(training_datataset, batch_size, shuffle=True)
 val_dataloader = DataLoader(validation_datataset , batch_size, shuffle=True)
 test_dataloader = DataLoader(testing_datataset, batch_size, shuffle=True)
+
+ruiz_train_dataloader = DataLoader(ruiz_training_set, batch_size, shuffle=True)
+ruiz_val_dataloader = DataLoader(ruiz_validation_set, batch_size, shuffle=True)
+ruiz_test_dataloader = DataLoader(ruiz_testing_datataset , batch_size, shuffle=True)
+
 
 ## RUN TRAINING LOOP: 
 
@@ -95,13 +154,23 @@ val_losses = []
 best_val_loss = float('inf')  # infinito
 
 start_time_training = time.time()
-number_of_epochs = 500
+number_of_epochs = 100
 
 for epoch in range(1, number_of_epochs+1):
-    train_loss = train(model, device, train_dataloader, optimizer, epoch, type_dataset='training')
+    train_loss = train( model,
+                        device,
+                        ruiz_train_dataloader ,
+                        optimizer,
+                        epoch,
+                        type_dataset='training')
+    
     train_losses.append(train_loss)
 
-    val_loss = validation(model, device, val_dataloader, epoch, type_dataset='validation')
+    val_loss = validation(  model,
+                            device,
+                            ruiz_val_dataloader,
+                            epoch,
+                            type_dataset='validation')
     val_losses.append(val_loss)
 
     # Programar el LR basado en la pérdida de validación
@@ -142,7 +211,12 @@ threshold = 0.5
 # ------------------------------------////////// Training set /////////////---------------------------------------------------
 
 
-training_input, training_target, training_pred, training_pred_csv, trainig_scores = predict_test(model, train_dataloader, device, weights_file, threshold, type_dataset='training')
+training_input, training_target, training_pred, training_pred_csv, trainig_scores = predict_test(   model,
+                                                                                                    ruiz_train_dataloader,
+                                                                                                    device,
+                                                                                                    weights_file,
+                                                                                                    threshold,
+                                                                                                    type_dataset='training')
 
 #Saving a CSV file with prediction values
 prediction_train_set = {
@@ -160,15 +234,17 @@ df.to_excel('results/training_prediction.xlsx', index=False)
 
 TP_training, TN_training, FP_training, FN_training, ACC_training, PR_training, \
 SN_training, SP_training, F1_training, mcc_training, roc_auc_training = \
-evaluate_model(prediction=training_pred,
-               target=training_target,
-               dataset_type='Training',
-               threshold=threshold,
-               device=device)
+evaluate_model( prediction=training_pred,
+                target=training_target,
+                dataset_type='Training',
+                threshold=threshold,
+                device=device)
 
 
 #-------------------------------------------- ////////// Validation Set //////////-------------------------------------------------
-validation_input, validation_target, validation_pred, validation_pred_csv, validation_scores = predict_test(model, val_dataloader, device, weights_file, threshold, type_dataset='validation')
+validation_input, validation_target, validation_pred, validation_pred_csv, validation_scores = predict_test(model,
+                                                                                                            ruiz_val_dataloader,
+                                                                                                            device, weights_file, threshold, type_dataset='validation')
 
 #Saving a CSV file with prediction values
 prediction_validation_set = {
@@ -186,16 +262,16 @@ df.to_excel('results/validation_prediction.xlsx', index=False)
 
 TP_validation, TN_validation, FP_validation, FN_validation, ACC_validation, PR_validation, \
 SN_validation, SP_validation, F1_validation, mcc_validation, roc_auc_validation = \
-evaluate_model(prediction = validation_pred,
-               target = validation_target,
-               dataset_type = 'Validation',
-               threshold = threshold,
-               device = device)
+evaluate_model( prediction = validation_pred,
+                target = validation_target,
+                dataset_type = 'Validation',
+                threshold = threshold,
+                device = device)
 
 # --------------------------------------------////////// Test Set //////////---------------------------------------------------
 start_time_testing = time.time()
 
-test_input, test_target, test_pred, test_pred_csv, testing_scores = predict_test(model, test_dataloader, device, weights_file,threshold, type_dataset='testing')
+test_input, test_target, test_pred, test_pred_csv, testing_scores = predict_test(model, ruiz_test_dataloader, device, weights_file,threshold, type_dataset='testing')
 
 finish_time_testing = time.time()
 time_prediction = (finish_time_testing- start_time_testing) / 60
@@ -215,11 +291,11 @@ df.to_excel('results/testing_prediction.xlsx', index=False)
 
 TP_test, TN_test, FP_test, FN_test, ACC_test, PR_test, \
 SN_test, SP_test, F1_test, mcc_test, roc_auc_test = \
-evaluate_model(prediction=test_pred,
-               target = test_target,
-               dataset_type = 'Testing',
-               threshold = threshold,
-               device = device)
+evaluate_model( prediction=test_pred,
+                target = test_target,
+                dataset_type = 'Testing',
+                threshold = threshold,
+                device = device)
 
 
 finish_time = time.time()

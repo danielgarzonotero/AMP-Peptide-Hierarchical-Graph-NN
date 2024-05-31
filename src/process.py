@@ -43,7 +43,7 @@ def train(model, device, dataloader, optim, epoch, type_dataset):
     loss_collect /= len(dataloader.dataset)
     
     print(
-        "Epoch:{}   Training dataset:   Loss per Datapoint: {:.7f}%".format(
+        "Epoch:{}   Training dataset:   Loss per Datapoint: {:.4f}%".format(
             epoch, loss_collect * 100
         )
     ) 
@@ -143,6 +143,51 @@ def predict_test(model, dataloader, device, weights_file, threshold, type_datase
     
     return x_all, y_all, pred_all, pred_all_csv, scores
 
+def indep_test(model, dataloader, device, weights_file, threshold, type_dataset):
+    
+    model.eval()
+    model.load_state_dict(torch.load(weights_file))
+    
+    x_all = []
+    pred_all = []
+    
+    pred_all_csv = []
+    
+    # Remove gradients:
+    with torch.no_grad():
+
+        # Looping over the dataloader allows us to pull out input/output data:
+        for batch in dataloader:
+            
+            batch = batch.to(device)
+
+            # Make a prediction:
+            pred = model(
+                        x=batch.x,
+                        edge_index=batch.edge_index,
+                        edge_attr=batch.edge_attr,
+                        idx_batch=batch.batch,
+                        cc=batch.cc,
+                        monomer_labels=batch.monomer_labels,
+                        aminoacids_features=batch.aminoacids_features
+                )
+            pred_sigmoid = torch.sigmoid(pred)  # to be able to round and saving in a csv file as prediction results
+
+            x_all.extend(batch.sequence)
+            pred_all.extend(pred)
+            pred_all_csv.extend(pred_sigmoid)
+                
+            
+
+    # Concatenate the lists of tensors into a single tensor
+    pred_all = torch.cat(pred_all, dim=0)
+    
+    #This is to export the prediction rounded based on the threshold
+    pred_all_csv = torch.cat(pred_all_csv, dim=0)
+    scores = pred_all_csv.tolist() 
+    pred_all_csv = [custom_round(pred, threshold) for pred in pred_all_csv]
+    
+    return x_all, pred_all, pred_all_csv, scores
 
 
 def custom_round(pred, threshold):

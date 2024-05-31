@@ -21,8 +21,7 @@ def get_aminoacid_features(): #TODO remplazar aca por sequence_list para tener l
     p_iso_amino = []
     logp_amino = []
     atoms_amino = []
-     
-     
+
     aminoacids_set = ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
 
     for amino in aminoacids_set:

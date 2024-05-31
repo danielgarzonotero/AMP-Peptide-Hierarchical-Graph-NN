@@ -420,3 +420,46 @@ split_dataset('Combined_dataset_8204.csv', train_ratio=0.75, val_ratio=0.2, test
 
 
 # %%
+# %% ///////////// Playing with peptides sequences ////////////////////////
+import pandas as pd
+
+# Función para intercambiar aminoácidos en una posición específica
+def swap_aminoacids(sequence, position, new_aminoacid):
+    sequence_list = list(sequence)
+    sequence_list[position-1] = new_aminoacid
+    return ''.join(sequence_list)
+
+# Péptido inicial
+
+d8 ='RTVRCTCI'
+
+aminoacids_set = ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
+
+# Intercambiar aminoácidos en posiciones específicas
+new_sequences = []
+df = pd.DataFrame(columns=["sequence_name", "sequence"])
+for aminoacid_5 in aminoacids_set:
+    position_5 =5
+    new_sequence = swap_aminoacids(d8, position_5, aminoacid_5 )
+    for aminoacid_7 in aminoacids_set:
+        position_7 =7
+        new_sequence = swap_aminoacids(new_sequence, position_7, aminoacid_7)
+        for aminoacid_2 in aminoacids_set:
+            position_2 =2
+            new_sequence = swap_aminoacids(new_sequence, position_2, aminoacid_2 )
+            for aminoacid_6 in aminoacids_set:
+                position_6 =6
+                new_sequence = swap_aminoacids(new_sequence, position_6, aminoacid_6 )
+                new_sequences.append({"sequence_name": f"p_2{aminoacid_2}5{aminoacid_5}6{aminoacid_6}7{aminoacid_7}", "sequence": new_sequence})
+
+
+# Agregar las nuevas secuencias al DataFrame
+df = df.append(new_sequences, ignore_index=True)
+df['nueva_columna'] = 0 
+
+
+# Guardar el DataFrame en un archivo CSV
+df.to_csv('d8_options_p_2_5_6_7.csv', index=False)
+
+print("Nuevas secuencias añadidas al archivo sequences.csv")
+# %%
